@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assessment Promosi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --primary:#1E3A5F; --primary-600:#17304D; --primary-700:#0F2438;
+  --secondary:#5B8FB9; --accent:#F97316; --accent-600:#E0650D; --on-primary:#FFFFFF;
+  --green:#16A34A; --red:#DC2626; --amber:#F97316; --blue:#2563EB;
+  --bg:#F6F7FA; --surface:#FFFFFF; --surface-2:#EDEEF3;
+  --fg:#1A1F36; --fg-muted:#6B7194; --border:#DEE1EA; --border-strong:#C5C9D6;
+  --ring:rgba(30,58,95,.30);
+  --shadow-sm:0 1px 3px rgba(26,31,54,.05);
+  --shadow:0 4px 20px -4px rgba(26,31,54,.12);
+  --shadow-lg:0 20px 50px -12px rgba(26,31,54,.20);
+  --r-sm:10px; --r:14px; --r-lg:18px; --r-xl:24px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px;
+  --sidebar:264px; --font:'Plus Jakarta Sans',system-ui,sans-serif;
+  --trans:200ms cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0F1729; --surface:#15203a; --surface-2:#121b31;
+  --fg:#E8F4F2; --fg-muted:#8FA6C8; --border:#22304d; --border-strong:#2E4164;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.4);
+  --shadow:0 4px 20px -4px rgba(0,0,0,.6);
+  --shadow-lg:0 20px 50px -12px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--fg);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;transition:background var(--trans),color var(--trans)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+h1,h2,h3,h4{line-height:1.25;font-weight:700;letter-spacing:-.01em}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit}
+input,select,textarea{font-family:inherit;font-size:14px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+.mono{font-family:'Fira Code',monospace}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;height:100vh;z-index:40;transition:transform var(--trans);overflow:hidden}
+.sidebar::after{content:"";position:absolute;top:0;right:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--primary),var(--accent));border-radius:0 0 0 2px;opacity:.5}
+.brand{padding:var(--s6) var(--s5) var(--s5);display:flex;align-items:center;gap:var(--s3)}
+.brand-logo{width:42px;height:42px;border-radius:14px 6px;background:linear-gradient(135deg,var(--primary),var(--accent));display:grid;place-items:center;color:#fff;flex-shrink:0;box-shadow:var(--shadow);transform:rotate(-2deg)}
+.brand-txt h1{font-size:15px;font-weight:800;letter-spacing:-.02em}
+.brand-txt p{font-size:11px;color:var(--fg-muted);font-weight:500}
+.nav{flex:1;padding:var(--s3) var(--s3);overflow-y:auto}
+.nav-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--fg-muted);font-weight:700;padding:var(--s4) var(--s3) var(--s2)}
+.nav-item{display:flex;align-items:center;gap:var(--s3);width:100%;padding:11px var(--s3);border-radius:var(--r-sm);color:var(--fg-muted);font-weight:600;font-size:14px;text-align:left;transition:all var(--trans);margin-bottom:2px;position:relative}
+.nav-item:hover{background:var(--surface-2);color:var(--fg)}
+.nav-item.active{background:var(--surface-2);color:var(--primary);font-weight:700;box-shadow:inset 4px 0 0 var(--primary)}
+.nav-item svg{width:19px;height:19px;flex-shrink:0}
+.nav-item .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:11px;padding:1px 7px;border-radius:20px;font-weight:700}
+.nav-item.active .badge{background:var(--primary);color:var(--on-primary)}
+.sidebar-foot{padding:var(--s4);border-top:1px solid var(--border)}
+
+.main{flex:1;margin-left:var(--sidebar);min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--surface) 85%,transparent);backdrop-filter:blur(12px);border-bottom:2px solid var(--primary);padding:var(--s4) var(--s6);display:flex;align-items:center;gap:var(--s4)}
+.topbar h2{font-size:19px;font-weight:800}
+.topbar .sub{font-size:12.5px;color:var(--fg-muted);font-weight:500}
+.topbar .spacer{flex:1}
+.menu-btn{display:none}
+.content{padding:var(--s6);max-width:1400px;width:100%;margin:0 auto}
+.view{display:none;animation:fade .3s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);padding:9px 16px;border-radius:var(--r-sm);font-weight:600;font-size:14px;transition:all var(--trans);white-space:nowrap;border:1px solid transparent}
+.btn svg{width:17px;height:17px}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-600));color:var(--on-primary);box-shadow:var(--shadow-sm)}
+.btn-primary:hover{filter:brightness(1.08);box-shadow:var(--shadow);transform:translateY(-1px)}
+.btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-600));color:#fff;box-shadow:var(--shadow-sm)}
+.btn-accent:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-ghost{background:var(--surface);border-color:var(--border);color:var(--fg)}
+.btn-ghost:hover{background:var(--surface-2);border-color:var(--border-strong)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{filter:brightness(1.08)}
+.btn-sm{padding:6px 11px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.icon-btn{width:38px;height:38px;border-radius:var(--r-sm);display:grid;place-items:center;background:var(--surface);border:1px solid var(--border);color:var(--fg-muted);transition:all var(--trans)}
+.icon-btn:hover{background:var(--surface-2);color:var(--fg);border-color:var(--border-strong)}
+.icon-btn svg{width:19px;height:19px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-sm)}
+.grid{display:grid;gap:var(--s5)}
+.stat-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.stat{padding:var(--s5);display:flex;flex-direction:column;gap:var(--s3);position:relative;overflow:hidden;border-radius:var(--r-lg) var(--r) var(--r-lg) var(--r)}
+.stat::before{content:"";position:absolute;top:0;left:0;bottom:0;width:4px;border-radius:4px 0 0 4px;background:linear-gradient(180deg,var(--primary),var(--accent));z-index:1}
+.stat-ico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;color:#fff}
+.stat-ico svg{width:23px;height:23px}
+.stat h3{font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.stat p{font-size:13px;color:var(--fg-muted);font-weight:600}
+.stat .trend{font-size:12px;font-weight:600;margin-top:2px}
+
+.charts-grid{grid-template-columns:2fr 1fr;margin-top:var(--s5)}
+@media(max-width:900px){.charts-grid{grid-template-columns:1fr}}
+.chart-card{padding:var(--s5);min-width:0;border-top:2px solid var(--primary)}
+.chart-card h3{font-size:15px;margin-bottom:var(--s2)}
+.chart-card .ch-sub{font-size:12.5px;color:var(--fg-muted);margin-bottom:var(--s4)}
+.chart-box{position:relative;height:300px}
+.chart-box.sm{height:260px}
+
+/* Toolbar */
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);margin-bottom:var(--s5);flex-wrap:wrap}
+.sec-head h2{font-size:20px}
+.sec-head p{font-size:13px;color:var(--fg-muted)}
+.toolbar{display:flex;gap:var(--s3);flex-wrap:wrap;align-items:center;margin-bottom:var(--s5)}
+.search-box{position:relative;flex:1;min-width:200px;max-width:340px}
+.search-box svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--fg-muted)}
+.search-box input{width:100%;padding:9px 12px 9px 36px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg)}
+.search-box input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--ring)}
+select.filter{padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg);font-weight:500;cursor:pointer}
+select.filter:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--ring)}
+
+/* Table */
+.table-wrap{overflow-x:auto;border-radius:var(--r-lg);border:1px solid var(--border);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:13px var(--s4);font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--fg-muted);font-weight:700;background:var(--surface-2);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:color var(--trans)}
+th.sortable:hover{color:var(--primary)}
+th .th-in{display:inline-flex;align-items:center;gap:5px}
+th .arrow{opacity:.3;font-size:10px}
+th.asc .arrow,th.desc .arrow{opacity:1;color:var(--primary)}
+td{padding:13px var(--s4);border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr{transition:background var(--trans)}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:none}
+.row-actions{display:flex;gap:6px;justify-content:flex-end}
+.mini-btn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;background:var(--surface-2);color:var(--fg-muted);transition:all var(--trans);border:none;cursor:pointer}
+.mini-btn:hover{color:var(--fg);background:var(--border)}
+.mini-btn.del:hover{background:#fde8e8;color:var(--red)}
+[data-theme=dark] .mini-btn.del:hover{background:#3a1a1a}
+.mini-btn svg{width:16px;height:16px}
+.score-bar{height:6px;border-radius:6px;background:var(--surface-2);overflow:hidden;width:60px;display:inline-block;vertical-align:middle;margin-left:8px}
+.score-bar span{display:block;height:100%;border-radius:6px;transition:width .3s ease}
+
+/* Badges */
+.tag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.tag.green{background:color-mix(in srgb,var(--green) 14%,transparent);color:var(--green)}
+.tag.amber{background:color-mix(in srgb,var(--amber) 15%,transparent);color:var(--amber)}
+.tag.gray{background:var(--surface-2);color:var(--fg-muted)}
+.tag.blue{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue)}
+.tag.red{background:color-mix(in srgb,var(--red) 13%,transparent);color:var(--red)}
+.pill{padding:2px 9px;border-radius:6px;font-size:12px;font-weight:600;background:var(--surface-2);color:var(--fg-muted)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(8,20,19,.55);backdrop-filter:blur(3px);z-index:100;display:none;align-items:center;justify-content:center;padding:var(--s4);opacity:0;transition:opacity var(--trans)}
+.modal-overlay.open{display:flex;opacity:1}
+.modal{background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--shadow-lg);width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;transform:translateY(12px) scale(.98);transition:transform var(--trans);border:1px solid var(--border)}
+.modal-overlay.open .modal{transform:none}
+.modal.lg{max-width:820px}
+.modal.xl{max-width:960px}
+.modal-head{padding:var(--s5) var(--s6);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:var(--s4)}
+.modal-head h3{font-size:18px}
+.modal-head p{font-size:12.5px;color:var(--fg-muted)}
+.modal-body{padding:var(--s6);overflow-y:auto}
+.modal-foot{padding:var(--s4) var(--s6);border-top:1px solid var(--border);display:flex;gap:var(--s3);justify-content:flex-end;flex-wrap:wrap}
+.close-x{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--fg-muted);transition:all var(--trans)}
+.close-x:hover{background:var(--surface-2);color:var(--fg)}
+.close-x svg{width:20px;height:20px}
+
+/* Forms */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}
+.form-grid .full{grid-column:1/-1}
+@media(max-width:560px){.form-grid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12.5px;font-weight:600;color:var(--fg)}
+.field label .req{color:var(--red)}
+.field input,.field select,.field textarea{padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg);transition:all var(--trans)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--ring)}
+.field textarea{resize:vertical;min-height:90px}
+.field .hint{font-size:11.5px;color:var(--fg-muted)}
+.field.err input,.field.err select,.field.err textarea{border-color:var(--red)}
+.field .err-msg{font-size:11.5px;color:var(--red);display:none}
+.field.err .err-msg{display:block}
+
+/* Alert */
+.alert-box{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,var(--surface)),var(--surface));border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:var(--r-lg);padding:var(--s4) var(--s5);margin-bottom:var(--s5);display:flex;align-items:flex-start;gap:var(--s4)}
+.alert-box .ai{width:40px;height:40px;border-radius:11px;background:var(--accent);color:#fff;display:grid;place-items:center;flex-shrink:0}
+.alert-box h4{font-size:14.5px;margin-bottom:3px}
+.alert-list{font-size:13.5px;color:var(--fg-muted);display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.alert-list b{color:var(--fg)}
+
+/* Toast */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:10px}
+.toast{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:13px 18px;display:flex;align-items:center;gap:12px;min-width:260px;max-width:360px;animation:slideIn .3s ease;font-size:14px;font-weight:500}
+.toast.success{border-left-color:var(--green)}
+.toast.error{border-left-color:var(--red)}
+.toast.warn{border-left-color:var(--amber)}
+.toast svg{width:20px;height:20px;flex-shrink:0}
+.toast-undo { margin-left:auto; background:var(--surface-2); border:1px solid var(--border-strong); border-radius:6px; padding:5px 12px; font-size:12px; font-weight:700; color:var(--fg); cursor:pointer; transition:all 0.2s ease; }
+.toast-undo:hover { background:var(--border); }
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:none;opacity:1}}
+
+/* Empty */
+.empty{text-align:center;padding:var(--s8) var(--s5);color:var(--fg-muted)}
+.empty svg{width:52px;height:52px;margin-bottom:var(--s4);opacity:.5}
+.empty h4{font-size:16px;color:var(--fg);margin-bottom:4px}
+.empty p{font-size:13.5px}
+
+/* Palette modal */
+.palette-body{display:flex;flex-direction:column;gap:var(--s5)}
+.pal-section h4{font-size:13px;font-weight:700;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:var(--s3)}
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--s3)}
+.preset-sw{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);border:2px solid var(--border);background:var(--surface);transition:all var(--trans);cursor:pointer;text-align:left}
+.preset-sw:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.preset-sw.active{border-color:var(--primary);box-shadow:0 0 0 3px var(--ring)}
+.sw-colors{display:flex;flex-shrink:0}
+.sw-colors span{width:20px;height:20px;border-radius:50%;border:2px solid var(--surface);box-shadow:var(--shadow-sm)}
+.sw-colors span:last-child{margin-left:-8px}
+.sw-name{font-size:13px;font-weight:600}
+.custom-row{display:flex;gap:var(--s4);flex-wrap:wrap}
+.color-field{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface-2);flex:1;min-width:180px;cursor:pointer}
+.color-field>span:first-child{font-size:13px;font-weight:600;flex:1}
+.color-field input[type=color]{width:38px;height:38px;border:none;background:none;border-radius:8px;cursor:pointer;padding:0}
+.color-field input[type=color]::-webkit-color-swatch-wrapper{padding:2px}
+.color-field input[type=color]::-webkit-color-swatch{border:1px solid var(--border);border-radius:7px}
+.color-field .hexval{font-family:'Fira Code',monospace;font-size:12px;color:var(--fg-muted);min-width:64px}
+.pal-hint{font-size:12px;color:var(--fg-muted);margin-top:10px;line-height:1.5}
+.pal-preview{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px;background:var(--surface-2);border-radius:var(--r);border:1px solid var(--border)}
+.pal-preview .pv-label{font-size:13px;font-weight:600;color:var(--fg-muted)}
+
+/* Segmented */
+.seg{display:inline-flex;background:var(--surface-2);border-radius:var(--r-sm);padding:3px;gap:2px}
+.seg button{padding:6px 12px;border-radius:7px;font-size:13px;font-weight:600;color:var(--fg-muted);transition:all var(--trans)}
+.seg button.active{background:var(--surface);color:var(--fg);box-shadow:var(--shadow-sm)}
+
+/* Guide */
+.guide-step{display:flex;gap:var(--s4);padding:var(--s3) 0;border-bottom:1px solid var(--border)}
+.guide-step:last-child{border:none}
+.guide-num{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;display:grid;place-items:center;font-weight:800;flex-shrink:0;font-size:14px}
+.guide-step h4{font-size:14.5px;margin-bottom:2px}
+.guide-step p{font-size:13px;color:var(--fg-muted)}
+
+/* Utility cards */
+.util-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--s5)}
+.util-card{padding:var(--s5)}
+.util-card .uc-head{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s3)}
+.util-card .uc-ico{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;color:#fff;flex-shrink:0}
+.util-card .uc-ico svg{width:21px;height:21px}
+.util-card h3{font-size:15.5px}
+.util-card p{font-size:13px;color:var(--fg-muted);margin-bottom:var(--s4)}
+.util-card .uc-actions{display:flex;gap:10px;flex-wrap:wrap}
+.import-preview{background:var(--surface-2);border-radius:var(--r);padding:var(--s4);margin-top:var(--s4);font-size:13px;max-height:200px;overflow-y:auto}
+.import-preview .ip-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)}
+.import-preview .ip-row:last-child{border:none}
+
+/* Report */
+.report{background:#fff;color:#1a1a1a;padding:36px 40px;border-radius:var(--r)}
+.report h1{font-size:22px;color:var(--primary-700)}
+.report .rep-head{border-bottom:2px solid var(--primary);padding-bottom:16px;margin-bottom:20px}
+.report table{color:#1a1a1a}
+.report th{background:#f0f6ff;color:#0f2438}
+.report td,.report th{border:1px solid #ddd;padding:9px 12px}
+
+/* Skor input table on penilaian view */
+.skor-row{display:grid;grid-template-columns:1fr 200px;gap:var(--s4);align-items:center;padding:16px 0;border-bottom:1px solid var(--border)}
+.skor-row:last-child{border:none}
+.skor-row .k-title{font-weight:700;font-size:14.5px;color:var(--fg)}
+.skor-row .k-sub{font-size:12px;color:var(--fg-muted);line-height:1.4}
+.seg-skor{display:flex;gap:4px;width:100%}
+.seg-skor button{flex:1;padding:8px 0;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:15px;font-weight:700;color:var(--fg-muted);transition:all var(--trans);cursor:pointer}
+.seg-skor button:hover{background:var(--surface-2);color:var(--fg);border-color:var(--border-strong)}
+.seg-skor button.active{background:var(--primary);color:var(--on-primary);border-color:var(--primary);box-shadow:var(--shadow-sm)}
+.skor-total{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:var(--surface-2);border-radius:var(--r);margin-top:var(--s4);border:1px solid var(--border)}
+.skor-total .t-label{font-size:13px;color:var(--fg-muted);font-weight:600}
+.skor-total .t-num{font-size:30px;font-weight:800;letter-spacing:-.03em}
+.skor-total .t-grade{font-size:14px;font-weight:700;padding:4px 12px;border-radius:20px}
+
+/* Input Komponen Lainnya */
+.lain-row{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px dashed var(--border)}
+.lain-row:last-child{border:none}
+.lain-row .l-title{font-weight:600; font-size:14.5px}
+.lain-row input{width:100px; text-align:center; font-weight:bold; font-size:15px}
+
+@media(max-width:1024px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:none}
+  .main{margin-left:0}
+  .menu-btn{display:grid}
+}
+
+/* Kunci Utama: Perbaikan Cetak agar tidak ada layer ganda */
+@media print{
+  body.modal-open .app { display: none !important; }
+  .modal-overlay.open { position: static; background: none; padding: 0; display: block; }
+  .modal { box-shadow: none; max-width: 100%; border: none; transform: none; margin: 0; }
+  .modal-head, .modal-foot, .close-x, .no-print { display: none !important; }
+  .modal-body { padding: 0; overflow: visible; height: auto; }
+  body { background: #fff; }
+}
+
+.kategori-label {
+    display: inline-block;
+    padding: 3px 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ===== Firebase Login & Sync ===== */
+#loginOverlay{position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:var(--s5)}
+#loginOverlay.hidden{display:none}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--shadow-lg);padding:40px 36px;max-width:400px;width:100%;text-align:center}
+.login-card .brand-logo{margin:0 auto 18px;transform:none}
+.login-card h2{font-size:20px;margin-bottom:6px}
+.login-card p{font-size:13.5px;color:var(--fg-muted);margin-bottom:24px}
+.login-google{display:inline-flex;align-items:center;gap:12px;padding:12px 26px;border-radius:var(--r);border:1px solid var(--border-strong);background:var(--surface);font-weight:700;font-size:14.5px;color:var(--fg);cursor:pointer;transition:all var(--trans);box-shadow:var(--shadow-sm)}
+.login-google:hover{background:var(--surface-2);transform:translateY(-1px)}
+.login-google svg{width:20px;height:20px}
+.sync-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
+.sync-badge .dot{width:8px;height:8px;border-radius:50%}
+.sync-badge.live{background:color-mix(in srgb,var(--green) 14%,transparent);color:var(--green)}
+.sync-badge.live .dot{background:var(--green);animation:pulse 1.6s ease infinite}
+.sync-badge.local{background:var(--surface-2);color:var(--fg-muted)}
+.sync-badge.local .dot{background:var(--fg-muted)}
+.sync-badge.off{background:color-mix(in srgb,var(--red) 13%,transparent);color:var(--red)}
+.sync-badge.off .dot{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.user-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:20px;background:var(--surface-2);font-size:12.5px;font-weight:600}
+.user-chip button{background:none;border:none;color:var(--red);cursor:pointer;font-size:12.5px;font-weight:700;padding:0 0 0 6px}
+#loginNote{font-size:12.5px;color:var(--fg-muted);margin-top:18px;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="loginOverlay" class="hidden">
+  <div class="login-card">
+    <div class="brand-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+    <h2>Assessment Promosi</h2>
+    <p>Masuk dengan akun Google untuk mengakses data bersama secara real-time</p>
+    <button class="login-google" id="btnGoogleLogin" onclick="fbLogin()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.57 5.57 0 0 1-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09A11.99 11.99 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.27 14.29a7.2 7.2 0 0 1 0-4.58V6.62H1.29a12.02 12.02 0 0 0 0 10.76l3.98-3.09z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z"/></svg>
+      Masuk dengan Google
+    </button>
+    <div id="loginNote">Data tersinkron otomatis antar pengguna. Perlu bantuan? Hubungi admin.</div>
+  </div>
+</div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+      <div class="brand-txt"><h1>Assessment</h1><p>Penilaian Wawancara Promosi</p></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">Utama</div>
+      <button class="nav-item active" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Dashboard</button>
+      <button class="nav-item" data-view="pejabat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Data Kandidat</button>
+      <button class="nav-item" data-view="kriteria"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="20" cy="18" r="2"/></svg>Kriteria Penilaian</button>
+      <button class="nav-item" data-view="nilai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Input Penilaian<span class="badge" id="navBelum" style="display:none"></span></button>
+      <button class="nav-item" data-view="hasil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Hasil &amp; Laporan</button>
+      <div class="nav-label">Sistem</div>
+      <button class="nav-item" data-view="utilitas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Data &amp; Utilitas</button>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="nav-item" onclick="openGuide()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>Panduan</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" onclick="toggleSidebar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <div><h2 id="pageTitle">Dashboard</h2><p class="sub" id="pageSub">Ringkasan penilaian wawancara</p></div>
+      <div class="spacer"></div>
+      <span class="sync-badge local" id="syncBadge" title="Status sinkronisasi data"><span class="dot"></span><span id="syncText">Mode Lokal</span></span>
+      <span class="user-chip" id="userChip" style="display:none"><span id="userName"></span><button onclick="fbLogout()" title="Keluar">✕</button></span>
+      <button class="icon-btn" id="paletteBtn" title="Palet Warna" onclick="openPalette()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/></svg></button>
+      <button class="icon-btn" id="themeToggle" title="Ganti tema" onclick="toggleTheme()"></button>
+    </header>
+    <div class="content">
+
+      <section class="view active" id="view-dashboard">
+        <div id="dashAlert"></div>
+        <div class="grid stat-grid" id="statCards"></div>
+        <div class="grid charts-grid">
+          <div class="card chart-card">
+            <h3>Skor Akhir per Kandidat</h3>
+            <p class="ch-sub">Total Nilai Akhir Promosi tertinggi ke terendah</p>
+            <div class="chart-box"><canvas id="chartPejabat"></canvas></div>
+          </div>
+          <div class="card chart-card">
+            <h3>Distribusi Rekomendasi (Grade)</h3>
+            <p class="ch-sub">Sebaran kategori hasil penilaian</p>
+            <div class="chart-box sm"><canvas id="chartGrade"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-pejabat">
+        <div class="sec-head">
+          <div><h2>Data Kandidat</h2><p>Daftar seluruh calon kandidat yang akan diasesmen</p></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="exportKandidatExcel()" title="Simpan daftar kandidat ke file Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8M8 9h1"/></svg> Export Excel</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportKandidatJSON()" title="Simpan daftar kandidat ke file JSON"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Export JSON</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importKandidatFile').click()" title="Tambah kandidat dari file Excel/JSON (mis. daftar hadir)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Import Kandidat</button>
+            <input type="file" id="importKandidatFile" accept=".json,.xlsx,.xls" hidden onchange="previewImportKandidat(event)">
+            <button class="btn btn-primary" onclick="openPejabatForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Tambah Kandidat</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="pejabatSearch" placeholder="Cari nama / NIP / unit..." oninput="renderPejabat()"></div>
+          <select class="filter" id="pejabatFilterJabatan" onchange="renderPejabat()"><option value="">Semua Jabatan Asal</option></select>
+          <select class="filter" id="pejabatFilterTujuan" onchange="renderPejabat()"><option value="">Semua Usulan Jabatan</option></select>
+          <select class="filter" id="pejabatFilterUnit" onchange="renderPejabat()"><option value="">Semua Unit Kerja</option></select>
+        </div>
+        <div class="table-wrap"><table id="pejabatTable">
+          <thead><tr>
+            <th class="sortable" data-sort="nama"><span class="th-in">Nama <span class="arrow">▲</span></span></th>
+            <th class="sortable" data-sort="nip"><span class="th-in">NIK <span class="arrow">▲</span></span></th>
+            <th class="sortable" data-sort="jabatan"><span class="th-in">Jabatan Asal <span class="arrow">▲</span></span></th>
+            <th class="sortable" data-sort="jabatan_tujuan"><span class="th-in">Usulan Jabatan <span class="arrow">▲</span></span></th>
+            <th class="sortable" data-sort="unit"><span class="th-in">Unit Kerja <span class="arrow">▲</span></span></th>
+            <th style="text-align:center;cursor:default">Status Nilai</th>
+            <th style="text-align:right;cursor:default">Aksi</th>
+          </tr></thead>
+          <tbody id="pejabatBody"></tbody>
+        </table></div>
+      </section>
+
+      <section class="view" id="view-kriteria">
+        <div class="sec-head">
+          <div><h2>Kriteria Wawancara Kompetensi</h2><p>Bobot di bawah ini khusus untuk komponen Wawancara (total harus 100%)</p></div>
+          <button class="btn btn-primary" onclick="openKriteriaForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Tambah Kriteria</button>
+        </div>
+        <div class="toolbar">
+          <select class="filter" id="kriteriaFilterKategori" onchange="renderKriteria()" style="min-width:260px">
+              <!-- Options populated dynamically -->
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="editKategoriName()" title="Ubah nama kategori yang sedang dipilih"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Ubah Nama Kategori</button>
+          <button class="btn btn-ghost btn-sm" onclick="tambahKategori()" title="Tambah kategori/usulan jabatan baru"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M12 5v14M5 12h14"/></svg> Tambah Kategori</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportKriteria()" title="Simpan kriteria ke file (untuk dibagikan)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Export Kriteria</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importKriteriaFile').click()" title="Isi kriteria dari file yang dibagikan teman"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Import Kriteria</button>
+          <button class="btn btn-danger btn-sm" onclick="hapusKategori()" title="Hapus kategori yang sedang dipilih (termasuk kriterianya)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Hapus Kategori</button>
+          <input type="file" id="importKriteriaFile" accept=".json" hidden onchange="previewImportKriteria(event)">
+        </div>
+        <div id="bobotWarn" style="display:none;margin-bottom:var(--s4)"></div>
+        <div id="bobotKomponenContainer"></div>
+        <div class="table-wrap"><table id="kriteriaTable">
+          <thead><tr>
+            <th style="cursor:default">#</th>
+            <th class="sortable" data-sort="nama"><span class="th-in">Aspek <span class="arrow">▲</span></span></th>
+            <th class="sortable" data-sort="bobot"><span class="th-in">Bobot (%) <span class="arrow">▲</span></span></th>
+            <th style="cursor:default">Deskripsi</th>
+            <th style="text-align:right;cursor:default">Aksi</th>
+          </tr></thead>
+          <tbody id="kriteriaBody"></tbody>
+        </table></div>
+      </section>
+
+      <section class="view" id="view-nilai">
+        <div class="sec-head">
+          <div><h2>Input Penilaian Asesmen Promosi</h2><p>Isi skor Wawancara (1-5) dan Komponen Lainnya (0-100)</p></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="exportNilai()" title="Simpan semua nilai ke file (untuk dibagikan)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Export Nilai</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importNilaiFile').click()" title="Isi nilai dari file teman"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Import Nilai</button>
+            <input type="file" id="importNilaiFile" accept=".json" hidden onchange="previewImportNilai(event)">
+          </div>
+        </div>
+        <div class="toolbar" style="gap:12px;margin-bottom:14px;flex-wrap:wrap">
+          <div class="search-box" style="max-width:280px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="nilaiSearch" placeholder="Cari nama kandidat..." oninput="refreshNilaiSelect()"></div>
+          <select class="filter" id="nilaiFilterJabatan" onchange="refreshNilaiSelect()"><option value="">Semua Jabatan Asal</option></select>
+          <select class="filter" id="nilaiFilterTujuan" onchange="refreshNilaiSelect()"><option value="">Semua Usulan Jabatan</option></select>
+          <select class="filter" id="nilaiFilterUnit" onchange="refreshNilaiSelect()"><option value="">Semua Unit Kerja</option></select>
+        </div>
+        <div class="toolbar" style="gap:16px;">
+          <select class="filter" id="nilaiSelect" style="max-width:320px;flex:1" onchange="loadPenilaianForm()"></select>
+          <input type="text" id="nilaiPanelis" placeholder="Nama Pewawancara..." style="padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:14px;max-width:240px;flex:1" oninput="simpanNamaPanelis(this.value)" title="Nama yang akan tercetak otomatis pada Berita Acara">
+          <input type="text" id="nilaiTempat" placeholder="Tempat (cth: Indramayu)" style="padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:14px;max-width:180px;flex:1" oninput="simpanTempatBA(this.value)" title="Kota/tempat pada Berita Acara">
+          <input type="date" id="nilaiTanggal" style="padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:14px" onchange="simpanTanggalBA(this.value)" title="Tanggal pada Berita Acara">
+          <span class="tag gray" id="nilaiStatusTag" style="margin-left:auto">Belum dinilai</span>
+        </div>
+        <div class="card" style="padding:var(--s5)" id="nilaiFormWrap"></div>
+      </section>
+
+      <section class="view" id="view-hasil">
+        <div class="sec-head">
+          <div><h2>Hasil &amp; Laporan</h2><p>Rekap Komposisi Nilai Akhir Asesmen Promosi</p></div>
+          <button class="btn btn-ghost no-print" onclick="printHasil()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Cetak Laporan</button>
+        </div>
+        <div class="toolbar">
+          <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="hasilSearch" placeholder="Cari kandidat..." oninput="renderHasil()"></div>
+          <select class="filter" id="hasilFilterGrade" onchange="renderHasil()"><option value="">Semua Grade</option></select>
+          <select class="filter" id="hasilFilterTujuan" onchange="renderHasil()"><option value="">Semua Usulan Jabatan</option></select>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th style="cursor:default">#</th><th style="cursor:default">Nama</th><th style="cursor:default">Usulan Jabatan / Unit Asal</th>
+            <th style="cursor:default">Nilai Akhir</th><th style="cursor:default">Rekomendasi</th><th style="text-align:right;cursor:default">Cetak BA</th>
+          </tr></thead>
+          <tbody id="hasilBody"></tbody>
+        </table></div>
+      </section>
+
+      <section class="view" id="view-utilitas">
+        <div class="sec-head"><div><h2>Data &amp; Utilitas</h2><p>Pengaturan dan manajemen file sistem</p></div></div>
+
+        <div class="util-grid">
+          <div class="card util-card">
+            <div class="uc-head"><div class="uc-ico" style="background:linear-gradient(135deg,var(--primary),var(--primary-600))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div><h3>Backup JSON</h3></div>
+            <p>Ekspor seluruh data penilaian ke satu file cadangan.</p>
+            <div class="uc-actions"><button class="btn btn-primary" onclick="exportJSON()">Export Backup</button></div>
+          </div>
+          <div class="card util-card">
+            <div class="uc-head"><div class="uc-ico" style="background:linear-gradient(135deg,var(--accent),var(--accent-600))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></div><h3>Restore JSON</h3></div>
+            <p>Impor file backup. Data saat ini akan diganti.</p>
+            <div class="uc-actions"><button class="btn btn-accent" onclick="document.getElementById('importFile').click()">Pilih File</button><input type="file" id="importFile" accept=".json" hidden onchange="previewImport(event)"></div>
+          </div>
+          <div class="card util-card">
+            <div class="uc-head"><div class="uc-ico" style="background:linear-gradient(135deg,var(--green),#0f8a3c)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8M8 9h1"/></svg></div><h3>Export CSV</h3></div>
+            <p>Ekspor ke format Excel.</p>
+            <div class="uc-actions"><button class="btn btn-ghost btn-sm" onclick="exportCSV('hasil')">Hasil Penilaian</button><button class="btn btn-ghost btn-sm" onclick="exportCSV('pejabat')">Daftar Kandidat</button></div>
+          </div>
+          <div class="card util-card">
+            <div class="uc-head"><div class="uc-ico" style="background:linear-gradient(135deg,var(--red),#b91c1c)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><h3>Reset Database</h3></div>
+            <p>Hapus seluruh nilai dan kembalikan struktur data awal yang bersih (68 kandidat).</p>
+            <div class="uc-actions"><button class="btn btn-danger" onclick="resetToDefaultData()">Muat Ulang Data Awal</button></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalEl">
+  <div class="modal-head"><div><h3 id="modalTitle"></h3><p id="modalSub"></p></div><button class="close-x" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body" id="modalBody"></div>
+  <div class="modal-foot" id="modalFoot"></div>
+</div></div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ========== KONFIGURASI FIREBASE ==========
+   CARA ISI: 1) Buka https://console.firebase.google.com → Buat project (nama bebas, mis. "asesmen-promosi")
+             2) Build → Firestore Database → Create database → mode Test → lokasi asia-southeast2 (Jakarta)
+             3) Build → Authentication → Get started → Sign-in method → aktifkan Google
+             4) Project settings (ikon gerigi) → General → scroll ke bawah → "Your apps" → Web app (</>) → daftarkan
+             5) Salin 6 nilai (apiKey, authDomain, ...) ke bawah ini, lalu simpan file
+   Setelah diisi: semua pengguna login Google dan melihat data yang SAMA secara real-time. */
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+const FIREBASE_DOC = 'asesmen_data_v1'; // nama dokumen Firestore (jangan diubah)
+const FIREBASE_READY = FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId;
+
+/* ========== STATE ========== */
+const DB_KEY='asesmen_publik_v1';
+let db={pejabat:[], kriteria:[], nilai:[], nilaiLain:[], bobotLain:[]};
+let sortState={pejabat:{key:'nama',dir:1},kriteria:{key:'bobot',dir:-1}};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+let namaPanelis = localStorage.getItem('asesmen_publik_panelis') || '';
+let tempatBA = localStorage.getItem('asesmen_publik_tempat') || 'Indramayu';
+let tanggalBA = localStorage.getItem('asesmen_publik_tanggal') || ''; // kosong = hari ini
+
+/* ========== FIREBASE (SYNC REAL-TIME) ========== */
+let fbApp=null, fbAuth=null, fbDb=null, fbUnsub=null, fbUser=null, fbBusy=false, fbTimer=null;
+function fbInit(){
+  if(!FIREBASE_READY){ setSyncBadge('local'); return; }
+  try{
+    fbApp = firebase.initializeApp(FIREBASE_CONFIG);
+    fbAuth = firebase.auth(fbApp);
+    fbDb = firebase.firestore(fbApp);
+    fbAuth.onAuthStateChanged(user=>{
+      fbUser = user;
+      if(user){
+        $('loginOverlay').classList.add('hidden');
+        $('userChip').style.display='';
+        $('userName').textContent = user.displayName||user.email||'Pengguna';
+        fbSubscribe();
+        setSyncBadge('live','Tersinkron');
+      }else{
+        $('loginOverlay').classList.remove('hidden');
+        $('userChip').style.display='none';
+        setSyncBadge('off','Belum Masuk');
+      }
+    });
+    // Tangkap hasil redirect login (error seperti akun ditolak dll)
+    fbAuth.getRedirectResult().catch(e=>{
+      if(e && e.code && e.code!=='auth/popup-closed-by-user' && e.code!=='auth/cancelled-popup-request'){
+        toast('Login gagal: '+e.message,'error');
+      }
+    });
+  }catch(e){ console.error('Firebase init error:',e); setSyncBadge('local'); }
+}
+function fbLogin(){
+  if(!FIREBASE_READY){ toast('Firebase belum dikonfigurasi','error'); return; }
+  // Pakai redirect (bukan popup) agar tidak terblokir adblock/cookie pihak ketiga
+  const provider = new firebase.auth.GoogleAuthProvider();
+  fbAuth.signInWithRedirect(provider).catch(e=>{
+    toast('Gagal masuk: '+e.message,'error');
+  });
+}
+function fbLogout(){ if(fbAuth) fbAuth.signOut(); toast('Anda keluar','warn'); }
+function setSyncBadge(mode,text){
+  const b=$('syncBadge'),t=$('syncText');
+  if(!b) return;
+  b.className='sync-badge '+mode;
+  t.textContent = text || (mode==='live'?'Tersinkron':mode==='off'?'Tidak Terhubung':'Mode Lokal');
+}
+function fbSubscribe(){
+  if(!fbDb || fbUnsub) return;
+  const docRef = fbDb.collection('asesmen').doc(FIREBASE_DOC);
+  fbUnsub = docRef.onSnapshot(snap=>{
+    if(snap.exists){
+      const remote = snap.data().db;
+      if(remote && remote.pejabat){
+        // Jangan timpa jika perubahan datang dari diri sendiri (sedang mengetik/simpan)
+        if(!fbBusy){
+          const remoteLen = remote.pejabat.length;
+          const localLen = db.pejabat.length;
+          if(remoteLen>0 || localLen>0){
+            db = {pejabat:remote.pejabat||[], kriteria:remote.kriteria||[], nilai:remote.nilai||[], nilaiLain:remote.nilaiLain||[], bobotLain:remote.bobotLain||[]};
+            try{ localStorage.setItem(DB_KEY,JSON.stringify(db)); }catch(e){}
+            renderAll();
+            if(remoteLen!==localLen) toast('Data diperbarui dari pengguna lain','success');
+          }
+        }
+        setSyncBadge('live','Tersinkron');
+      }
+    }else{
+      // Dokumen belum ada → kirim data lokal sebagai inisialisasi
+      fbPush();
+    }
+  }, err=>{ console.error('Firestore error:',err); setSyncBadge('off','Sinkron Gagal'); });
+}
+function saveDB(){
+  // Selalu simpan lokal (offline cache)
+  try{ localStorage.setItem(DB_KEY,JSON.stringify(db)); }catch(e){}
+  // Kirim ke Firestore (debounce 500ms agar tidak spam)
+  if(!fbDb || !fbUser || !FIREBASE_READY) return;
+  clearTimeout(fbTimer);
+  fbTimer = setTimeout(fbPush, 500);
+}
+function fbPush(){
+  if(!fbDb || !fbUser) return;
+  fbBusy = true;
+  fbDb.collection('asesmen').doc(FIREBASE_DOC).set({
+    db: db,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedBy: fbUser.displayName||fbUser.email||''
+  }).then(()=>{ setSyncBadge('live','Tersinkron'); })
+    .catch(e=>{ console.error('Push error:',e); setSyncBadge('off','Sinkron Gagal'); })
+    .finally(()=>{ setTimeout(()=>{ fbBusy=false; }, 600); });
+}
+
+// Standar Kategori Jabatan Tujuan
+const KATEGORI_JABATAN = ["Asisten Manajer", "Manajer", "Manajer / Asisten Manajer (Definitif)", "Asisten Manajer Produksi"];
+
+const DEFAULT_BOBOT_LAIN = [
+    {kategori: "Asisten Manajer", wawancara: 35, psikotes: 25, kinerja: 25, tpa: 15},
+    {kategori: "Manajer", wawancara: 35, psikotes: 25, kinerja: 25, tpa: 15},
+    {kategori: "Manajer / Asisten Manajer (Definitif)", wawancara: 35, psikotes: 25, kinerja: 25, tpa: 15},
+    {kategori: "Asisten Manajer Produksi", wawancara: 35, psikotes: 25, kinerja: 25, tpa: 15}
+];
+
+const DEFAULT_KRITERIA=[
+  {kategori:"Asisten Manajer", nama:'Motivasi',bobot:20,deskripsi:'Dorongan untuk berkontribusi pada unit kerja dan tanggung jawab atas amanah yang diberikan.'},
+  {kategori:"Asisten Manajer", nama:'Kepemimpinan',bobot:25,deskripsi:'Mampu memberi arahan, menetapkan prioritas, memantau hasil kerja, dan melakukan koreksi.'},
+  {kategori:"Asisten Manajer", nama:'Kerja Sama Tim',bobot:25,deskripsi:'Komunikasi dua arah, membangun koordinasi lintas fungsi, dan menyelesaikan konflik secara proporsional.'},
+  {kategori:"Asisten Manajer", nama:'Adaptasi & Kestabilan',bobot:15,deskripsi:'Terbuka terhadap perubahan, tetap tenang dan profesional dalam situasi yang berubah.'},
+  {kategori:"Asisten Manajer", nama:'Integritas',bobot:15,deskripsi:'Menjaga kejujuran, kepatuhan terhadap aturan, dan konsistensi antara ucapan dan tindakan.'},
+  {kategori:"Manajer", nama:'Motivasi',bobot:15,deskripsi:'Memiliki target kontribusi yang jelas dan berorientasi pada hasil serta pengembangan diri.'},
+  {kategori:"Manajer", nama:'Kepemimpinan',bobot:30,deskripsi:'Memahami target organisasi, membagi tugas dan PIC, memberi arahan, serta melakukan monitoring dan evaluasi.'},
+  {kategori:"Manajer", nama:'Pengambilan Keputusan',bobot:25,deskripsi:'Mempertimbangkan risiko, memakai data terbaik yang tersedia, patuh prosedur, dan berani memutuskan.'},
+  {kategori:"Manajer", nama:'Pengelolaan Tim',bobot:30,deskripsi:'Membina bawahan, menjaga kerja sama dan kontinuitas pelayanan, serta menegakkan disiplin secara proporsional.'}
+];
+
+const DEFAULT_PEJABAT = [
+  {"nama": "Budi Santoso, S.T.", "nip": "00 00 001", "jabatan": "Staf Teknik", "jabatan_tujuan": "Asisten Manajer", "unit": "Unit Teknik"},
+  {"nama": "Siti Rahayu, S.E.", "nip": "00 00 002", "jabatan": "Staf Keuangan", "jabatan_tujuan": "Asisten Manajer", "unit": "Bagian Keuangan"},
+  {"nama": "Ahmad Fauzi, S.H.", "nip": "00 00 003", "jabatan": "Staf Umum", "jabatan_tujuan": "Manajer", "unit": "Bagian Umum"},
+  {"nama": "Dewi Lestari, S.Pd.", "nip": "00 00 004", "jabatan": "Staf SDM", "jabatan_tujuan": "Asisten Manajer", "unit": "Bagian SDM"},
+  {"nama": "Rudi Hartono, A.Md.", "nip": "00 00 005", "jabatan": "Staf Pelayanan", "jabatan_tujuan": "Manajer / Asisten Manajer (Definitif)", "unit": "Unit Pelayanan"},
+  {"nama": "Fitri Handayani, S.ST.", "nip": "00 00 006", "jabatan": "Asisten Manajer Produksi", "jabatan_tujuan": "Asisten Manajer Produksi", "unit": "Bidang Produksi"}
+];
+
+
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem(DB_KEY));
+    if(d)db=Object.assign({pejabat:[],kriteria:[],nilai:[], nilaiLain:[], bobotLain:[]},d);
+    
+    if(!db.nilaiLain) db.nilaiLain = [];
+    if(!db.bobotLain || db.bobotLain.length === 0) {
+        db.bobotLain = DEFAULT_BOBOT_LAIN.map(b => ({id:uid(), ...b}));
+    }
+    if(db.kriteria && db.kriteria.length > 0 && !db.kriteria[0].kategori) {
+        db.kriteria.forEach(k => k.kategori = "Asisten Manajer"); 
+    }
+    if(db.pejabat && db.pejabat.length > 0 && !db.pejabat[0].jabatan_tujuan) {
+        db.pejabat.forEach(p => p.jabatan_tujuan = "Asisten Manajer");
+    }
+  }catch(e){}
+  
+  if(db.pejabat.length === 0 && db.kriteria.length === 0){
+    db.kriteria = DEFAULT_KRITERIA.map(k=>({id:uid(),...k}));
+    db.pejabat = DEFAULT_PEJABAT.map(p=>({id:uid(),...p}));
+    db.bobotLain = DEFAULT_BOBOT_LAIN.map(b => ({id:uid(),...b}));
+    saveDB();
+  }
+  // Auto-perbaiki kriteria yang tidak sesuai ketentuan dokumen (mis. data lama)
+  ensureKriteriaValid();
+  if(namaPanelis && $('nilaiPanelis')) $('nilaiPanelis').value = namaPanelis;
+  if($('nilaiTempat')) $('nilaiTempat').value = tempatBA;
+  if($('nilaiTanggal')) $('nilaiTanggal').value = tanggalBA;
+}
+
+// Pastikan kriteria tiap kategori sesuai ketentuan resmi (8 kompetensi, total bobot 100%)
+function ensureKriteriaValid(){
+  let changed = false;
+  const byCat = {};
+  DEFAULT_KRITERIA.forEach(k=>{ (byCat[k.kategori]=byCat[k.kategori]||[]).push(k); });
+  Object.keys(byCat).forEach(cat=>{
+    const cur = db.kriteria.filter(k=>k.kategori===cat);
+    const curTotal = cur.reduce((a,k)=>a+(+k.bobot||0),0);
+    const curNames = cur.map(k=>k.nama);
+    const def = byCat[cat];
+    const defTotal = def.reduce((a,k)=>a+(+k.bobot||0),0);
+    const matches = def.length===cur.length && curTotal===defTotal && def.every(d=>curNames.includes(d.nama));
+    if(!matches){
+      // Data lama/tidak lengkap: ganti dengan ketentuan resmi, pertahankan nilai yang masih cocok
+      const oldMap = {}; cur.forEach(k=>oldMap[k.nama]=k);
+      db.kriteria = db.kriteria.filter(k=>k.kategori!==cat);
+      def.forEach(d=>{
+        const old = oldMap[d.nama];
+        db.kriteria.push({id:old?old.id:uid(), kategori:cat, nama:d.nama, bobot:d.bobot, deskripsi:d.deskripsi});
+      });
+      changed = true;
+    }
+  });
+  if(changed){
+    saveDB();
+    toast('Kriteria diperbarui otomatis sesuai ketentuan resmi','success');
+  }
+}
+
+function simpanNamaPanelis(val){
+  namaPanelis = val.trim();
+  localStorage.setItem('asesmen_publik_panelis', namaPanelis);
+}
+function simpanTempatBA(val){
+  tempatBA = val.trim() || 'Indramayu';
+  localStorage.setItem('asesmen_publik_tempat', tempatBA);
+}
+function simpanTanggalBA(val){
+  tanggalBA = val;
+  localStorage.setItem('asesmen_publik_tanggal', tanggalBA);
+}
+function formatTanggalBA(){
+  if(tanggalBA){
+    const d = new Date(tanggalBA+'T00:00:00');
+    if(!isNaN(d)) return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  }
+  return new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+}
+
+function getUniqueKategoriJabatan() {
+    let kats = new Set();
+    db.pejabat.forEach(p => { if(p.jabatan_tujuan) kats.add(p.jabatan_tujuan); });
+    db.kriteria.forEach(k => { if(k.kategori) kats.add(k.kategori); });
+    db.bobotLain.forEach(b => { if(b.kategori) kats.add(b.kategori); });
+    // Konstanta hanya dipakai saat data masih kosong (fallback pertama kali)
+    if(kats.size === 0) KATEGORI_JABATAN.forEach(k => kats.add(k));
+    return Array.from(kats).sort();
+}
+
+function renderKategoriOptions(selectId) {
+    const s = $(selectId);
+    if(!s) return;
+    const currentVal = s.value;
+    const cats = getUniqueKategoriJabatan();
+    
+    if(selectId === 'kriteriaFilterKategori' || selectId === 'hasilFilterTujuan' || selectId === 'pejabatFilterTujuan'){
+        s.innerHTML = `<option value="">Semua Usulan Jabatan</option>` + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    } else {
+        s.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+    if(currentVal && cats.includes(currentVal)) s.value = currentVal;
+}
+
+// Isi filter Jabatan Asal & Unit Kerja (unik dari data kandidat)
+function renderFilterJabatanUnit(){
+  ['pejabatFilterJabatan','pejabatFilterUnit'].forEach(id=>{
+    const s=$(id); if(!s) return;
+    const cur=s.value;
+    const field = id==='pejabatFilterJabatan' ? 'jabatan' : 'unit';
+    const vals = [...new Set(db.pejabat.map(p=>(p[field]||'').trim()).filter(v=>v))].sort((a,b)=>a.localeCompare(b,'id'));
+    s.innerHTML = `<option value="">${id==='pejabatFilterJabatan'?'Semua Jabatan Asal':'Semua Unit Kerja'}</option>` + vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    if(cur && vals.includes(cur)) s.value = cur;
+  });
+}
+
+/* ========== HELPERS ========== */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function grade(skor){
+  if(skor==null||isNaN(skor))return null;
+  if(skor>=85)return{k:'A',txt:'Sangat Direkomendasikan',cls:'green'};
+  if(skor>=75)return{k:'B',txt:'Direkomendasikan',cls:'blue'};
+  if(skor>=65)return{k:'C',txt:'Direkomendasikan dgn Pengembangan',cls:'amber'};
+  return{k:'D',txt:'Belum Direkomendasikan',cls:'red'};
+}
+
+function getKriteriaByJabatan(jabatanTujuan) {
+    let targetCat = jabatanTujuan;
+    if (!db.kriteria.some(k => k.kategori === targetCat)) {
+        if (targetCat.toLowerCase().includes("manajer") && !targetCat.toLowerCase().includes("asisten")) {
+            targetCat = "Manajer";
+        } else {
+            targetCat = "Asisten Manajer"; 
+        }
+    }
+    return db.kriteria.filter(k => k.kategori === targetCat);
+}
+function getBobotKomponen(jabatanTujuan) {
+    let b = db.bobotLain.find(x => x.kategori === jabatanTujuan);
+    if(!b) {
+         if (jabatanTujuan.toLowerCase().includes("manajer") && !jabatanTujuan.toLowerCase().includes("asisten")) {
+             b = db.bobotLain.find(x => x.kategori === "Manajer");
+         } else {
+             b = db.bobotLain.find(x => x.kategori === "Asisten Manajer");
+         }
+         if(!b) b = {wawancara: 35, psikotes: 25, kinerja: 25, tpa: 15}; // Hard fallback
+    }
+    return b;
+}
+
+// Logic untuk mengambil seluruh detail skor
+function getSkorDetails(id){
+  const p = db.pejabat.find(x=>x.id===id);
+  if(!p) return { wawancara: null, psikotes: null, kinerja: null, tpa: null, akhir: null, isComplete: false };
+
+  const krActive = getKriteriaByJabatan(p.jabatan_tujuan);
+  const rows=db.nilai.filter(n=>n.pejabatId===id);
+  const totalBobotWawancara=krActive.reduce((a,k)=>a+(+k.bobot||0),0);
+  
+  // Hitung Nilai Wawancara (0-100)
+  let wSkor = null;
+  if(rows.length > 0 && totalBobotWawancara > 0){
+      let sum=0;
+      krActive.forEach(k=>{
+        const n=rows.find(r=>r.kriteriaId===k.id);
+        if(n&&n.skor!=null) sum+= ((+n.skor)/5 * 100) * (+k.bobot)/totalBobotWawancara;
+      });
+      wSkor = Math.round(sum * 100) / 100;
+  }
+  const wFinal = wSkor !== null ? Math.round(wSkor) : null;
+
+  // Hitung Komponen Lainnya
+  const nl = db.nilaiLain.find(n => n.pejabatId === id) || {};
+  const psi = nl.psikotes != null && nl.psikotes !== '' ? parseFloat(nl.psikotes) : null;
+  const kin = nl.kinerja != null && nl.kinerja !== '' ? parseFloat(nl.kinerja) : null;
+  const tpa = nl.tpa != null && nl.tpa !== '' ? parseFloat(nl.tpa) : null;
+
+  // Pengaturan Bobot Akhir
+  const b = getBobotKomponen(p.jabatan_tujuan);
+
+  let sumAkhir = 0;
+  let totalBobotAktif = 0;
+  if (wFinal !== null) { sumAkhir += wFinal * (b.wawancara/100); totalBobotAktif += b.wawancara; }
+  if (psi !== null) { sumAkhir += psi * (b.psikotes/100); totalBobotAktif += b.psikotes; }
+  if (kin !== null) { sumAkhir += kin * (b.kinerja/100); totalBobotAktif += b.kinerja; }
+  if (tpa !== null) { sumAkhir += tpa * (b.tpa/100); totalBobotAktif += b.tpa; }
+
+  let akhir = null;
+  let isComplete = false;
+  if(totalBobotAktif > 0) akhir = Math.round(sumAkhir);
+  if(wFinal !== null && psi !== null && kin !== null && tpa !== null) isComplete = true;
+
+  return { wawancara: wFinal, psikotes: psi, kinerja: kin, tpa: tpa, akhir: akhir, isComplete };
+}
+
+// Fallback logic jika dipanggil skorPejabat langsung
+function skorPejabat(id){
+    return getSkorDetails(id).akhir;
+}
+
+/* ========== TOAST ========== */
+function toast(msg,type='success',undoFn){
+  const icons={success:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/>',error:'<circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>',warn:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'};
+  const t=document.createElement('div');t.className='toast '+type;
+  t.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--${type==='success'?'green':type==='error'?'red':'amber'})">${icons[type]}</svg><span>${esc(msg)}</span>`;
+  if(undoFn){
+    const btn=document.createElement('button');btn.className='toast-undo';btn.textContent='Urungkan';
+    btn.onclick=()=>{clearTimeout(t._timer);try{undoFn();}catch(e){}t.remove();};
+    t.appendChild(btn);
+  }
+  $('toastWrap').appendChild(t);
+  t._timer=setTimeout(()=>{t.style.animation='slideIn .25s reverse';setTimeout(()=>t.remove(),240);},undoFn?8000:3000);
+}
+
+/* ========== MODAL ========== */
+function showModal(title,sub,body,foot,size=''){
+  $('modalTitle').textContent=title;$('modalSub').textContent=sub||'';$('modalSub').style.display=sub?'block':'none';
+  $('modalBody').innerHTML=body;$('modalFoot').innerHTML=foot||'';
+  $('modalEl').className='modal '+size;$('modalOverlay').classList.add('open');
+  document.body.classList.add('modal-open');
+}
+function closeModal(){
+  $('modalOverlay').classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+$('modalOverlay').addEventListener('click',e=>{if(e.target===$('modalOverlay'))closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+/* ========== NAV ========== */
+const titles={dashboard:['Dashboard','Ringkasan penilaian wawancara'],pejabat:['Data Kandidat','Daftar seluruh calon kandidat yang akan diasesmen'],kriteria:['Kriteria Wawancara','Aspek & bobot penilaian'],nilai:['Input Penilaian','Isi skor wawancara per kandidat'],hasil:['Hasil & Laporan','Rekap penilaian promosi'],utilitas:['Data & Utilitas','Pengaturan panelis dan file sistem']};
+document.querySelectorAll('.nav-item[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+function switchView(v){
+  document.querySelectorAll('.nav-item[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));
+  $('pageTitle').textContent=titles[v][0];$('pageSub').textContent=titles[v][1];
+  if(v==='dashboard')renderDashboard();
+  if(v==='pejabat') { renderKategoriOptions('pejabatFilterTujuan'); renderFilterJabatanUnit(); }
+  if(v==='kriteria') renderKategoriOptions('kriteriaFilterKategori');
+  if(v==='nilai')refreshNilaiSelect();
+  if(v==='hasil') { renderKategoriOptions('hasilFilterTujuan'); renderHasil(); }
+  if(window.innerWidth<=1024)toggleSidebar(false);
+}
+function toggleSidebar(open){$('sidebar').classList.toggle('open',open);}
+
+/* ========== THEME ========== */
+function setThemeIcon(){const dark=document.documentElement.dataset.theme==='dark';$('themeToggle').innerHTML=dark?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';}
+function toggleTheme(){const cur=document.documentElement.dataset.theme;const next=cur==='dark'?'light':'dark';document.documentElement.dataset.theme=next;localStorage.setItem('asesmen_publik_theme',next);setThemeIcon();if(typeof applyPalette==='function')applyPalette();}
+(function(){const t=localStorage.getItem('asesmen_publik_theme');if(t)document.documentElement.dataset.theme=t;})();
+
+/* ========== PALET WARNA ========== */
+const COLOR_PRESETS=[
+  {id:'navy',   nama:'Navy Coral',  primary:'#1E3A5F', accent:'#F97316', bg:'#F6F7FA', bgDark:'#0F1729'},
+  {id:'teal',   nama:'Teal Klasik', primary:'#0D9488', accent:'#F59E0B', bg:'#F0FDFA', bgDark:'#0B1514'},
+  {id:'blue',   nama:'Biru Korporat',primary:'#2563EB', accent:'#F59E0B', bg:'#EFF6FF', bgDark:'#0B1426'},
+  {id:'indigo', nama:'Ungu Indigo',  primary:'#6366F1', accent:'#EC4899', bg:'#EEF2FF', bgDark:'#0F0B2E'},
+  {id:'green',  nama:'Hijau Segar',  primary:'#16A34A', accent:'#0EA5E9', bg:'#F0FDF4', bgDark:'#0B1A0E'},
+  {id:'maroon', nama:'Merah Marun',  primary:'#B91C1C', accent:'#CA8A04', bg:'#FEF2F2', bgDark:'#1A0B0B'}
+];
+const THEME_KEY='asesmen_publik_palette';
+let paletteCfg={preset:'navy',primary:'#1E3A5F',accent:'#F97316',bg:'#F6F7FA',bgDark:'#0F1729'};
+function hexToRgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return{r:(n>>16)&255,g:(n>>8)&255,b:n&255};}
+function rgbToHex(r,g,b){const f=v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0');return '#'+f(r)+f(g)+f(b);}
+function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0;}else{const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4;}h/=6;}return{h:h*360,s:s*100,l:l*100};}
+function hslToHex(h,s,l){h/=360;s/=100;l/=100;let r,g,b;if(s===0){r=g=b=l;}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);}return rgbToHex(r*255,g*255,b*255);}
+function shade(hex,dl){const{r,g,b}=hexToRgb(hex);const {h,s,l}=rgbToHsl(r,g,b);return hslToHex(h,s,Math.max(4,Math.min(96,l+dl)));}
+function onColor(hex){const{r,g,b}=hexToRgb(hex);const lum=(0.299*r+0.587*g+0.114*b);return lum>150?'#0F2438':'#FFFFFF';}
+function applyPalette(){
+  const {primary,accent}=paletteCfg;
+  const root=document.documentElement.style;
+  const isDark=document.documentElement.dataset.theme==='dark';
+  root.setProperty('--primary',primary);
+  root.setProperty('--primary-600',shade(primary,-6));
+  root.setProperty('--primary-700',shade(primary,-12));
+  root.setProperty('--secondary',shade(primary,+18));
+  root.setProperty('--accent',accent);
+  root.setProperty('--accent-600',shade(accent,-8));
+  root.setProperty('--on-primary',onColor(primary));
+  const {r,g,b}=hexToRgb(primary);
+  root.setProperty('--ring',`rgba(${r},${g},${b},.35)`);
+  const bgBase=isDark?(paletteCfg.bgDark||'#0F1729'):(paletteCfg.bg||'#F6F7FA');
+  root.setProperty('--bg',bgBase);
+  if(isDark){
+    root.setProperty('--surface',shade(bgBase,+4));
+    root.setProperty('--surface-2',shade(bgBase,+7));
+    root.setProperty('--fg','#E8F4F2');
+    root.setProperty('--fg-muted',shade(bgBase,+48));
+    root.setProperty('--border',shade(bgBase,+12));
+    root.setProperty('--border-strong',shade(bgBase,+18));
+  }else{
+    root.setProperty('--surface','#FFFFFF');
+    root.setProperty('--surface-2',shade(bgBase,+2));
+    const bgHsl=rgbToHsl(...Object.values(hexToRgb(bgBase)));
+    root.setProperty('--fg',hslToHex(bgHsl.h,Math.min(bgHsl.s,40),12));
+    root.setProperty('--fg-muted',hslToHex(bgHsl.h,Math.min(bgHsl.s,25),42));
+    root.setProperty('--border',shade(bgBase,-6));
+    root.setProperty('--border-strong',shade(bgBase,-12));
+  }
+  if($('view-dashboard')&&$('view-dashboard').classList.contains('active'))renderDashboard();
+  updatePaletteUI();
+}
+function savePalette(){localStorage.setItem(THEME_KEY,JSON.stringify(paletteCfg));}
+function loadPalette(){try{const p=JSON.parse(localStorage.getItem(THEME_KEY));if(p&&p.primary)paletteCfg=p;}catch(e){}applyPalette();}
+function selectPreset(id){const p=COLOR_PRESETS.find(x=>x.id===id);if(!p)return;paletteCfg={preset:id,primary:p.primary,accent:p.accent,bg:p.bg,bgDark:p.bgDark};applyPalette();savePalette();}
+function setCustomColor(which,val){paletteCfg[which]=val;paletteCfg.preset='custom';applyPalette();savePalette();}
+function resetPalette(){selectPreset('navy');toast('Palet dikembalikan ke default','success');}
+function setThemeMode(mode){document.documentElement.dataset.theme=mode;localStorage.setItem('asesmen_publik_theme',mode);setThemeIcon();applyPalette();updatePaletteUI();}
+function syncPalHex(elId,val){const el=$(elId);if(el)el.textContent=val.toUpperCase();}
+function updatePaletteUI(){
+  const dark=document.documentElement.dataset.theme==='dark';
+  const l=$('palModeLight'),d=$('palModeDark');
+  if(l){l.classList.toggle('active',!dark);d.classList.toggle('active',dark);}
+}
+function openPalette(){
+  const swatches=COLOR_PRESETS.map(p=>`
+    <button class="preset-sw${paletteCfg.preset===p.id?' active':''}" onclick="selectPreset('${p.id}');openPalette()" title="${p.nama}">
+      <span class="sw-colors"><span style="background:${p.primary}"></span><span style="background:${p.accent}"></span></span>
+      <span class="sw-name">${p.nama}</span>
+    </button>`).join('');
+  showModal('Palet Warna','Sesuaikan tema aplikasi',`
+    <div class="palette-body">
+      <div class="pal-section"><h4>Tema Preset</h4><div class="preset-grid">${swatches}</div></div>
+      <div class="pal-section">
+        <h4>Warna Utama</h4>
+        <div class="custom-row">
+          <label class="color-field"><span>Warna Primer</span><input type="color" value="${paletteCfg.primary}" oninput="setCustomColor('primary',this.value);syncPalHex('palHexPrimary',this.value)"><span class="hexval" id="palHexPrimary">${paletteCfg.primary.toUpperCase()}</span></label>
+          <label class="color-field"><span>Warna Aksen</span><input type="color" value="${paletteCfg.accent}" oninput="setCustomColor('accent',this.value);syncPalHex('palHexAccent',this.value)"><span class="hexval" id="palHexAccent">${paletteCfg.accent.toUpperCase()}</span></label>
+        </div>
+      </div>
+      <div class="pal-section">
+        <h4>Warna Background</h4>
+        <div class="custom-row">
+          <label class="color-field"><span>☀️ BG Terang</span><input type="color" value="${paletteCfg.bg||'#F6F7FA'}" oninput="setCustomColor('bg',this.value);syncPalHex('palHexBg',this.value)"><span class="hexval" id="palHexBg">${(paletteCfg.bg||'#F6F7FA').toUpperCase()}</span></label>
+          <label class="color-field"><span>🌙 BG Gelap</span><input type="color" value="${paletteCfg.bgDark||'#0F1729'}" oninput="setCustomColor('bgDark',this.value);syncPalHex('palHexBgDark',this.value)"><span class="hexval" id="palHexBgDark">${(paletteCfg.bgDark||'#0F1729').toUpperCase()}</span></label>
+        </div>
+        <p class="pal-hint">Background halaman, sidebar, tabel, dan kartu mengikuti warna ini. Teks &amp; border dihitung otomatis.</p>
+      </div>
+      <div class="pal-section">
+        <h4>Mode Tampilan</h4>
+        <div class="seg" style="width:fit-content">
+          <button id="palModeLight" onclick="setThemeMode('light')">☀️ Terang</button>
+          <button id="palModeDark" onclick="setThemeMode('dark')">🌙 Gelap</button>
+        </div>
+      </div>
+      <div class="pal-preview">
+        <span class="pv-label">Pratinjau:</span>
+        <button class="btn btn-primary btn-sm">Primer</button>
+        <button class="btn btn-accent btn-sm">Aksen</button>
+        <span class="tag green">Baik</span>
+        <span class="pill">Pill</span>
+      </div>
+    </div>`,
+    `<button class="btn btn-ghost" onclick="resetPalette();openPalette()">Reset Default</button><button class="btn btn-primary" onclick="closeModal()">Selesai</button>`);
+  updatePaletteUI();
+}
+
+/* ========== DASHBOARD ========== */
+let charts={};
+let dashAlertMin=false;
+let dashAlertHidden = localStorage.getItem('asesmen_publik_dashalert')==='1';
+function toggleDashAlertMin(){ dashAlertMin=!dashAlertMin; renderDashboard(); }
+function hideDashAlert(){ dashAlertHidden=true; localStorage.setItem('asesmen_publik_dashalert','1'); renderDashboard(); toast('Notifikasi disembunyikan — klik "Tampilkan" untuk memunculkannya lagi','warn'); }
+function showDashAlert(){ dashAlertHidden=false; dashAlertMin=false; localStorage.removeItem('asesmen_publik_dashalert'); renderDashboard(); }
+function renderDashboard(){
+  const total=db.pejabat.length;
+  const dinilai=db.pejabat.filter(p=>getSkorDetails(p.id).akhir!==null).length;
+  const belum=total-dinilai;
+  const skors=db.pejabat.map(p=>getSkorDetails(p.id).akhir).filter(s=>s!==null);
+  const rata=skors.length?Math.round(skors.reduce((a,b)=>a+b,0)/skors.length):0;
+  const cards=[
+    {n:total,l:'Total Kandidat',c:'var(--primary)',ic:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'},
+    {n:dinilai,l:'Sudah Dinilai',c:'var(--green)',ic:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/>'},
+    {n:belum,l:'Belum Dinilai',c:'var(--accent)',ic:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'},
+    {n:rata,l:'Rata-rata Nilai Akhir',c:'var(--blue)',ic:'<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>'}];
+  $('statCards').innerHTML=cards.map(c=>`<div class="card stat"><div class="stat-ico" style="background:${c.c}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${c.ic}</svg></div><h3>${c.n}</h3><p>${c.l}</p></div>`).join('');
+  $('navBelum').style.display=belum?'inline-block':'none';$('navBelum').textContent=belum;
+  if(belum){const belumList=db.pejabat.filter(p=>getSkorDetails(p.id).akhir===null);
+    if(dashAlertHidden){
+      // Tersembunyi: tampilkan chip kecil untuk memunculkan lagi
+      $('dashAlert').innerHTML=`<button class="btn btn-ghost btn-sm" onclick="showDashAlert()" title="Tampilkan notifikasi lagi" style="margin-bottom:var(--s5)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> <b>${belum}</b> belum dinilai — tampilkan notifikasi</button>`;
+    } else if(dashAlertMin){
+      // Ringkas: satu baris
+      $('dashAlert').innerHTML=`<div class="alert-box" style="align-items:center;gap:var(--s3);margin-bottom:var(--s5);padding:10px 16px;cursor:pointer" onclick="toggleDashAlertMin()" title="Klik untuk melihat daftar lengkap">
+        <div class="ai" style="width:34px;height:34px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <h4 style="margin:0;font-size:14px"><b>${belum} kandidat belum dinilai penuh</b> <span style="color:var(--fg-muted);font-weight:500">— klik untuk perincian</span></h4>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button class="mini-btn" onclick="event.stopPropagation();toggleDashAlertMin()" title="Perluas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
+          <button class="mini-btn del" onclick="event.stopPropagation();hideDashAlert()" title="Sembunyikan notifikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+        </div>
+      </div>`;
+    } else {
+    $('dashAlert').innerHTML=`<div class="alert-box"><div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13.73 21a2 2 0 0 1-3.46 0M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div><div style="flex:1"><div style="display:flex;align-items:center;gap:12px"><h4>${belum} kandidat belum dinilai penuh</h4><div style="margin-left:auto;display:flex;gap:6px">
+          <button class="mini-btn" onclick="toggleDashAlertMin()" title="Ciutkan notifikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6-6 6 6"/></svg></button>
+          <button class="mini-btn del" onclick="hideDashAlert()" title="Sembunyikan notifikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+        </div></div><div class="alert-list">${belumList.slice(0,5).map(p=>`<div style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:3px 8px;border-radius:6px;transition:background .15s" onclick="bukaPenilaian('${p.id}')" onmouseover="this.style.background='color-mix(in srgb,var(--primary) 8%,transparent)'" onmouseout="this.style.background='transparent'" title="Klik untuk menilai ${esc(p.nama)}"><b>${esc(p.nama)}</b><span>${esc(p.unit||'-')} · <span style="color:var(--primary);font-weight:700">Nilai →</span></span></div>`).join('')}${belumList.length>5?`<button class="btn btn-sm" style="align-self:flex-start;margin-top:8px;background:var(--primary);color:var(--on-primary)" onclick="bukaPenilaian('${belumList[5].id}')">Lihat ${belumList.length-5} kandidat lainnya →</button>`:''}</div></div></div>`;}
+    }
+  else $('dashAlert').innerHTML='';
+  Object.values(charts).forEach(c=>c&&c.destroy());charts={};
+  const cs=getComputedStyle(document.documentElement);
+  const fg=cs.getPropertyValue('--fg-muted').trim(),grid=cs.getPropertyValue('--border').trim(),surface=cs.getPropertyValue('--surface').trim();
+  const primary=cs.getPropertyValue('--primary').trim(),accent=cs.getPropertyValue('--accent').trim(),green=cs.getPropertyValue('--green').trim(),blue=cs.getPropertyValue('--blue').trim(),red=cs.getPropertyValue('--red').trim();
+  Chart.defaults.font.family="'Plus Jakarta Sans',sans-serif";Chart.defaults.color=fg;Chart.defaults.animation=false;
+  const labeled=db.pejabat.map(p=>({nama:p.nama,s:getSkorDetails(p.id).akhir})).filter(x=>x.s!==null).sort((a,b)=>b.s-a.s);
+  charts.pj=new Chart($('chartPejabat'),{type:'bar',data:{labels:labeled.map(x=>x.nama),datasets:[{label:'Nilai Akhir',data:labeled.map(x=>x.s),backgroundColor:primary,borderRadius:8,maxBarThickness:44}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,max:100,grid:{color:grid},ticks:{precision:0}}}}});
+  const gMap={A:0,B:0,C:0,D:0};db.pejabat.forEach(p=>{const g=grade(getSkorDetails(p.id).akhir);if(g)gMap[g.k]++;});
+  const gLabels=['A','B','C','D'].filter(k=>gMap[k]>0);
+  charts.gd=new Chart($('chartGrade'),{type:'doughnut',data:{labels:gLabels,datasets:[{data:gLabels.map(k=>gMap[k]),backgroundColor:[green,blue,accent,red],borderWidth:2,borderColor:surface}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{padding:14,usePointStyle:true,pointStyle:'circle',boxWidth:8}}}}});
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{Object.values(charts).forEach(c=>c&&c.resize());});});
+}
+
+/* ========== PEJABAT ========== */
+function renderPejabat(){
+  const q=$('pejabatSearch').value.toLowerCase();
+  const fj=$('pejabatFilterTujuan')?$('pejabatFilterTujuan').value : '';
+  const fja=$('pejabatFilterJabatan')?$('pejabatFilterJabatan').value : '';
+  const fu=$('pejabatFilterUnit')?$('pejabatFilterUnit').value : '';
+  let rows=db.pejabat.filter(p=>(!q||p.nama.toLowerCase().includes(q)||(p.nip||'').includes(q)||(p.unit||'').toLowerCase().includes(q)) && (!fj || p.jabatan_tujuan === fj) && (!fja || (p.jabatan||'') === fja) && (!fu || (p.unit||'') === fu));
+  const {key,dir}=sortState.pejabat;
+  rows.sort((a,b)=>{let x=a[key]||'',y=b[key]||'';if(typeof x==='string'){x=x.toLowerCase();y=y.toLowerCase();}return x<y?-dir:x>y?dir:0;});
+  
+  $('pejabatBody').innerHTML=rows.length?rows.map(p=>{
+    const d=getSkorDetails(p.id), s=d.akhir, g=grade(s);
+    const certCount = p.sertifikat ? p.sertifikat.length : 0;
+    const certBadge = certCount > 0 ? `<div style="font-size:11px; color:var(--primary); margin-top:4px; font-weight:600">📎 ${certCount} Dokumen</div>` : '';
+    
+    return `<tr>
+    <td><b>${esc(p.nama)}</b>${certBadge}</td>
+    <td class="mono" style="font-size:13px">${esc(p.nip||'-')}</td>
+    <td>${esc(p.jabatan||'-')}</td>
+    <td><span class="pill">${esc(p.jabatan_tujuan||'Asisten Manajer')}</span></td>
+    <td>${esc(p.unit||'-')}</td>
+    <td style="text-align:center">${g?`<span class="tag ${g.cls}">${g.k} · ${s}</span>`:'<span class="tag gray">Belum dinilai</span>'}</td>
+    <td><div class="row-actions">
+      <button class="mini-btn" title="Input Semua Nilai" onclick="switchView('nilai');pilihPejabat('${p.id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><polyline points="9 14 11 16 15 11"/></svg>
+      </button>
+      <button class="mini-btn" title="Edit Data" onclick="openPejabatForm('${p.id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+      </button>
+      <button class="mini-btn del" title="Hapus Instan" onclick="doDelete('${p.id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
+    </div></td></tr>`;}).join(''):`<tr><td colspan="7"><div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><h4>Belum ada Kandidat</h4><p>Klik "Tambah Kandidat" untuk mulai</p></div></td></tr>`;
+}
+document.querySelectorAll('#pejabatTable th.sortable').forEach(th=>th.addEventListener('click',()=>{const key=th.dataset.sort;const st=sortState.pejabat;if(st.key===key)st.dir*=-1;else{st.key=key;st.dir=1;}document.querySelectorAll('#pejabatTable th').forEach(h=>h.classList.remove('asc','desc'));th.classList.add(st.dir===1?'asc':'desc');renderPejabat();}));
+
+function openPejabatForm(id){
+  const p=id?db.pejabat.find(x=>x.id===id):{};
+  const sertifikats = p.sertifikat || [];
+  
+  let sHtml = sertifikats.map((s,i) => `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-2); padding:8px 12px; border-radius:8px; margin-bottom:8px; font-size:13px; border:1px solid var(--border)">
+      <div style="display:flex; align-items:center; gap:8px; overflow:hidden">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2" style="flex-shrink:0"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600">${esc(s.name)}</span>
+      </div>
+      <div style="display:flex; gap:6px; flex-shrink:0">
+        <button type="button" class="mini-btn" style="background:var(--surface)" onclick="previewFile('${s.data}', '${esc(s.name)}')" title="Lihat Dokumen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button type="button" class="mini-btn del" style="background:var(--surface)" onclick="hapusSertifikat('${id}', ${i})" title="Hapus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+    </div>
+  `).join('');
+
+  const cats = getUniqueKategoriJabatan();
+  let jtOptions = cats.map(c => `<option value="${c}" ${p.jabatan_tujuan === c ? 'selected' : ''}>${c}</option>`).join('');
+  if(!p.jabatan_tujuan && !cats.includes("Asisten Manajer")) jtOptions += `<option value="Asisten Manajer" selected>Asisten Manajer</option>`;
+
+  showModal(id?'Edit Kandidat':'Tambah Kandidat','Data calon Asisten Manajer',`
+    <form id="pjForm" class="form-grid" onsubmit="return false">
+      <div class="field full"><label>Nama Lengkap <span class="req">*</span></label><input name="nama" value="${esc(p.nama||'')}" required><div class="err-msg">Nama wajib diisi</div></div>
+      <div class="field"><label>NIK / NIP</label><input name="nip" value="${esc(p.nip||'')}" placeholder="Nomor Induk"></div>
+      <div class="field"><label>Jabatan Saat Ini</label><input name="jabatan" value="${esc(p.jabatan||'')}" placeholder="cth: Staf Pelayanan"></div>
+      <div class="field"><label>Usulan Jabatan (Tujuan)</label>
+        <select name="jabatan_tujuan" id="jabatanTujuanSel">
+            ${jtOptions}
+            <option value="__edit__">✏️ Ubah Nama Usulan Jabatan Ini...</option>
+            <option value="__baru__">+ Tambah Usulan Jabatan Baru...</option>
+        </select>
+        <div class="hint">Pilih dari daftar, atau gunakan opsi ubah/tambah untuk mengetik nama baru.</div>
+      </div>
+      <div class="field"><label>Unit Kerja</label><input name="unit" value="${esc(p.unit||'')}" placeholder="cth: Cabang Lohbener"></div>
+      
+      <div class="field full" style="border-top:1px dashed var(--border); padding-top:14px; margin-top:6px;">
+        <label>Sertifikat / Dokumen Pendukung</label>
+        ${sHtml ? `<div style="margin-bottom:10px">${sHtml}</div>` : ''}
+        <input type="file" id="fileSertifikat" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="padding:8px; border:1px dashed var(--border-strong); background:var(--surface-2); width:100%">
+        <div class="hint" style="margin-top:6px">Bisa pilih beberapa file sekaligus (PDF, JPG, PNG). <b>Maks 1.5MB per file</b>.</div>
+      </div>
+    </form>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="btnSimpanPj" onclick="savePejabat('${id||''}')">${id?'Simpan':'Tambah'}</button>`);
+
+  const sel=$('jabatanTujuanSel');
+  sel.addEventListener('change', function(){
+    if(this.value==='__baru__'){
+      const val = prompt('Masukkan nama Usulan Jabatan baru:');
+      if(val && val.trim()){
+        const opt = document.createElement('option');
+        opt.value = val.trim(); opt.text = val.trim();
+        this.add(opt, this.options.length-2);
+        this.value = val.trim();
+      } else {
+        this.value = p.jabatan_tujuan || cats[0] || 'Asisten Manajer';
+      }
+    } else if(this.value==='__edit__'){
+      const current = p.jabatan_tujuan || cats[0] || 'Asisten Manajer';
+      const val = prompt('Ubah nama "'+current+'" menjadi:', current);
+      if(val && val.trim() && val.trim()!==current){
+        const n = val.trim();
+        // Ganti nama di SEMUA kandidat, kriteria & bobot yang memakai nama lama
+        db.pejabat.forEach(x=>{ if(x.jabatan_tujuan===current) x.jabatan_tujuan=n; });
+        db.kriteria.forEach(k=>{ if(k.kategori===current) k.kategori=n; });
+        db.bobotLain.forEach(b=>{ if(b.kategori===current) b.kategori=n; });
+        const opt = document.createElement('option');
+        opt.value = n; opt.text = n;
+        this.add(opt, this.options.length-2);
+        this.value = n;
+        toast('Usulan jabatan diganti menjadi "'+n+'" di seluruh data','success');
+      } else {
+        this.value = current;
+      }
+    }
+  });
+}
+
+window.previewFile = function(data, name) {
+    let content = '';
+    if (data.startsWith('data:image')) {
+        content = `<div style="text-align:center"><img src="${data}" style="max-width:100%; max-height:70vh; border-radius:8px; box-shadow:var(--shadow-sm)"></div>`;
+    } else if (data.startsWith('data:application/pdf')) {
+        content = `<iframe src="${data}" style="width:100%; height:75vh; border:1px solid var(--border); border-radius:8px"></iframe>`;
+    } else {
+        content = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg><h4>Preview tidak tersedia</h4><p>Format file ini hanya dapat diunduh.</p><a href="${data}" download="${name}" class="btn btn-primary" style="margin-top:12px; text-decoration:none">Unduh File</a></div>`;
+    }
+    showModal('Dokumen: ' + name, '', content, `<button class="btn btn-primary" onclick="closeModal()">Tutup</button>`, 'xl');
+};
+
+async function savePejabat(id){
+  const f=$('pjForm'), nama=f.nama.value.trim();
+  if(!nama){f.querySelector('.field').classList.add('err');return;}
+  
+  const fileInput = $('fileSertifikat');
+  const files = fileInput.files;
+  const MAX_SIZE = 1024 * 1024 * 1.5; // 1.5 MB limit
+  
+  for(let i=0; i<files.length; i++){
+    if(files[i].size > MAX_SIZE){
+        toast(`File "${files[i].name}" melebihi batas 1.5 MB!`, 'error');
+        return;
+    }
+  }
+
+  const btn = $('btnSimpanPj');
+  const ogText = btn.textContent;
+  if(files.length > 0){
+      btn.textContent = 'Menyimpan...';
+      btn.disabled = true;
+  }
+
+  let newSertifikats = [];
+  for(let i=0; i<files.length; i++){
+     const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = () => rej('');
+        r.readAsDataURL(files[i]);
+     });
+     if(base64) newSertifikats.push({ name: files[i].name, data: base64 });
+  }
+
+  const data={nama,nip:f.nip.value.trim(),jabatan:f.jabatan.value.trim(),jabatan_tujuan:f.jabatan_tujuan.value,unit:f.unit.value.trim()};
+  
+  if(id){
+      const p = db.pejabat.find(x=>x.id===id);
+      Object.assign(p,data);
+      if(newSertifikats.length > 0){
+          p.sertifikat = [...(p.sertifikat||[]), ...newSertifikats];
+      }
+  } else {
+      data.id=uid();
+      data.sertifikat = newSertifikats;
+      db.pejabat.push(data);
+  }
+
+  try {
+      saveDB();
+      renderKategoriOptions('pejabatFilterTujuan');
+      renderKategoriOptions('kriteriaFilterKategori');
+      renderKategoriOptions('hasilFilterTujuan');
+      renderPejabat(); refreshNilaiSelect(); renderDashboard(); closeModal();
+      toast(id?'Data diperbarui':'Kandidat ditambahkan');
+  } catch(e) {
+      btn.textContent = ogText;
+      btn.disabled = false;
+      if(e.name === 'QuotaExceededError'){
+          toast('Gagal: Memori browser penuh! Hapus file lama atau kecilkan ukuran file.', 'error');
+          if(!id) db.pejabat.pop();
+      } else {
+          toast('Gagal menyimpan file', 'error');
+      }
+  }
+}
+
+function hapusSertifikat(pid, sIdx){
+    if(!confirm('Hapus file dokumen ini?')) return;
+    const p = db.pejabat.find(x=>x.id===pid);
+    if(p && p.sertifikat){
+        p.sertifikat.splice(sIdx, 1);
+        try {
+            saveDB();
+            openPejabatForm(pid); 
+            toast('File berhasil dihapus', 'warn');
+        } catch(e){
+            toast('Gagal menghapus file', 'error');
+        }
+    }
+}
+
+function doDelete(id){
+  const p=db.pejabat.find(x=>x.id===id);if(!p)return;
+  const backup={pejabat:p, nilai:db.nilai.filter(n=>n.pejabatId===id), nilaiLain:db.nilaiLain.filter(n=>n.pejabatId===id)};
+  db.pejabat=db.pejabat.filter(x=>x.id!==id);
+  db.nilai=db.nilai.filter(n=>n.pejabatId!==id);
+  db.nilaiLain=db.nilaiLain.filter(n=>n.pejabatId!==id);
+  saveDB();
+  renderPejabat();renderDashboard();renderHasil();
+  
+  toast('Kandidat '+p.nama+' terhapus','warn',()=>{
+    db.pejabat.push(backup.pejabat);
+    db.nilai.push(...backup.nilai);
+    db.nilaiLain.push(...backup.nilaiLain);
+    saveDB();
+    renderPejabat();renderDashboard();renderHasil();
+    toast('Dibatalkan — data dikembalikan','success');
+  });
+}
+
+/* ========== EXPORT/IMPORT KANDIDAT ========== */
+function exportKandidatJSON(){
+  const rows=db.pejabat.map(p=>({nama:p.nama,nip:p.nip||'',jabatan:p.jabatan||'',jabatan_tujuan:p.jabatan_tujuan||'Asisten Manajer',unit:p.unit||''}));
+  if(!rows.length){ toast('Tidak ada kandidat','warn'); return; }
+  download('kandidat-'+new Date().toISOString().slice(0,10)+'.json', JSON.stringify({format:'kandidat-asesmen-v1',kandidat:rows},null,2), 'application/json');
+  toast('Export kandidat berhasil — '+rows.length+' kandidat','success');
+}
+function exportKandidatExcel(){
+  const rows=db.pejabat.map(p=>({'Nama':p.nama,'NIK':p.nip||'-','Jabatan Asal':p.jabatan||'-','Usulan Jabatan':p.jabatan_tujuan||'Asisten Manajer','Unit Kerja':p.unit||'-'}));
+  if(!rows.length){ toast('Tidak ada kandidat','warn'); return; }
+  try{
+    const ws=XLSX.utils.json_to_sheet(rows);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'KANDIDAT');
+    XLSX.writeFile(wb,'kandidat-'+new Date().toISOString().slice(0,10)+'.xlsx');
+    toast('Export Excel berhasil — '+rows.length+' kandidat','success');
+  }catch(e){ toast('Gagal export Excel: '+e.message,'error'); }
+}
+// Deteksi usulan jabatan dari nama sheet (DAFTAR HADIR style)
+function usulanDariNamaSheet(nama){
+  const n=String(nama||'').toLowerCase();
+  if(n.includes('produksi')) return 'Asisten Manajer Produksi';
+  if(n.includes('plt')) return 'Manajer / Asisten Manajer (Definitif)';
+  if(n.includes('manajer') && !n.includes('asisten')) return 'Manajer';
+  return 'Asisten Manajer';
+}
+// Cari indeks kolom berdasarkan kata kunci pada header
+function cariKolom(headers, kata){
+  for(let i=0;i<headers.length;i++){
+    const h=String(headers[i]||'').toLowerCase();
+    if(h.includes(kata)) return i;
+  }
+  return -1;
+}
+function parseFileKandidat(file, cb){
+  const nama=file.name.toLowerCase();
+  if(nama.endsWith('.json')){
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const d=JSON.parse(r.result);
+        let list = Array.isArray(d) ? d : (d.kandidat && Array.isArray(d.kandidat) ? d.kandidat : (d.pejabat && Array.isArray(d.pejabat) ? d.pejabat : null));
+        if(!list) cb(null,'File JSON tidak berisi daftar kandidat');
+        else cb(list.map(x=>({nama:x.nama,nip:x.nip||x.nik||'',jabatan:x.jabatan||'',tujuan:x.jabatan_tujuan||x.usulan||'Asisten Manajer',unit:x.unit||''})));
+      }catch(e){ cb(null,'File JSON tidak valid'); }
+    };
+    r.readAsText(file);
+  } else {
+    // Excel
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const wb=XLSX.read(r.result,{type:'array'});
+        const list=[];
+        wb.SheetNames.forEach(sheetName=>{
+          const ws=wb.Sheets[sheetName];
+          const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+          if(!aoa.length) return;
+          // cari baris header (baris yang mengandung "nama")
+          let hRow=-1;
+          for(let i=0;i<Math.min(aoa.length,8);i++){
+            if(String(aoa[i].join(' ')).toLowerCase().includes('nama')){ hRow=i; break; }
+          }
+          if(hRow<0) return;
+          const headers=aoa[hRow].map(h=>String(h||'').toLowerCase().trim());
+          const iNama=cariKolom(headers,'nama');
+          if(iNama<0) return;
+          const iNik=cariKolom(headers,'nik')>=0?cariKolom(headers,'nik'):cariKolom(headers,'nip');
+          // jabatan asal = kolom "jabatan" yang TIDAK mengandung "usulan"/"tujuan"; usulan = kolom mengandung "usulan"/"tujuan"
+          let iJab=-1, iTujuan=-1;
+          headers.forEach((h,i)=>{
+            if(h.includes('usulan')||h.includes('tujuan')){ if(iTujuan<0) iTujuan=i; }
+            else if(h.includes('jabatan')){ if(iJab<0) iJab=i; }
+          });
+          const iUnit=cariKolom(headers,'unit');
+          const tujuanDefault=usulanDariNamaSheet(sheetName);
+          for(let i=hRow+1;i<aoa.length;i++){
+            const row=aoa[i];
+            const nama=String(row[iNama]||'').trim();
+            if(!nama || !isNaN(nama)) continue; // lewati nomor/baris kosong
+            list.push({
+              nama:nama,
+              nip:iNik>=0?String(row[iNik]||'').trim():'',
+              jabatan:iJab>=0?String(row[iJab]||'').trim():'',
+              tujuan:iTujuan>=0?String(row[iTujuan]||'').trim():tujuanDefault,
+              unit:iUnit>=0?String(row[iUnit]||'').trim():''
+            });
+          }
+        });
+        if(!list.length) cb(null,'Tidak ada baris kandidat yang terbaca dari file Excel');
+        else cb(list);
+      }catch(e){ cb(null,'Gagal baca Excel: '+e.message); }
+    };
+    r.readAsArrayBuffer(file);
+  }
+}
+function previewImportKandidat(e){
+  const file=e.target.files[0]; if(!file) return;
+  parseFileKandidat(file,(list,err)=>{
+    if(err){ toast(err,'error'); return; }
+    window._importKandidat=list;
+    let baru=0, update=0;
+    list.forEach(x=>{
+      if(db.pejabat.some(p=>p.nama===x.nama)) update++; else baru++;
+    });
+    const kats=[...new Set(list.map(x=>x.tujuan||'Asisten Manajer'))];
+    const contoh=list.slice(0,6).map(x=>`<div class="ip-row"><span>${esc(x.nama)}</span><b>${esc(x.tujuan||'Asisten Manajer')}${x.nip?' · '+esc(x.nip):''}</b></div>`).join('');
+    showModal('Konfirmasi Import Kandidat','Preview file: '+file.name,`
+      <div style="padding:14px;background:color-mix(in srgb,var(--amber) 12%,transparent);border:1px solid color-mix(in srgb,var(--amber) 30%,transparent);border-radius:var(--r);font-size:13.5px;margin-bottom:16px">Kandidat dengan <b>nama yang sama</b> akan <b>diperbarui</b> datanya (NIK, jabatan, dll). Nama baru akan <b>ditambahkan</b>.</div>
+      <div class="import-preview">
+        <div class="ip-row"><span>Total kandidat dalam file</span><b>${list.length}</b></div>
+        <div class="ip-row"><span>Akan ditambahkan (baru)</span><b>${baru}</b></div>
+        <div class="ip-row"><span>Akan diperbarui (nama sama)</span><b>${update}</b></div>
+        <div class="ip-row"><span>Kategori usulan jabatan</span><b>${kats.join(', ')}</b></div>
+        ${contoh}
+        ${list.length>6?'<div class="ip-row"><span>...</span><b>+'+ (list.length-6) +' lainnya</b></div>':''}
+      </div>`,
+      `<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-accent" onclick="doImportKandidat()">Import Sekarang</button>`);
+  });
+  e.target.value='';
+}
+function doImportKandidat(){
+  const list=window._importKandidat; if(!list) return;
+  let baru=0, update=0;
+  list.forEach(x=>{
+    const nama=String(x.nama||'').trim(); if(!nama) return;
+    const tujuan=String(x.tujuan||'Asisten Manajer').trim();
+    if(!db.bobotLain.some(b=>b.kategori===tujuan)){
+      db.bobotLain.push({id:uid(),kategori:tujuan,wawancara:35,psikotes:25,kinerja:25,tpa:15});
+    }
+    const ada=db.pejabat.find(p=>p.nama===nama);
+    if(ada){
+      if(x.nip) ada.nip=x.nip;
+      if(x.jabatan) ada.jabatan=x.jabatan;
+      if(x.unit) ada.unit=x.unit;
+      ada.jabatan_tujuan=tujuan;
+      update++;
+    } else {
+      db.pejabat.push({id:uid(),nama:nama,nip:x.nip||'-',jabatan:x.jabatan||'',unit:x.unit||'',jabatan_tujuan:tujuan});
+      baru++;
+    }
+  });
+  saveDB();
+  renderKategoriOptions('pejabatFilterTujuan');
+  renderKategoriOptions('kriteriaFilterKategori');
+  renderKategoriOptions('hasilFilterTujuan');
+  renderFilterJabatanUnit();
+  renderPejabat(); renderDashboard(); renderHasil(); refreshNilaiSelect();
+  closeModal();
+  toast('Import kandidat selesai — '+baru+' ditambahkan, '+update+' diperbarui','success');
+}
+
+/* ========== KRITERIA ========== */
+function renderKriteria(){
+  const s=$('kriteriaFilterKategori');
+  const fk = s ? s.value : '';
+  const rows=db.kriteria.filter(k => !fk || k.kategori === fk);
+  
+  const totalBobot = rows.reduce((a,k)=>a+(+k.bobot||0),0);
+  const w=$('bobotWarn');
+  
+  // Tampilkan warning bobot
+  if(totalBobot!==100 && rows.length > 0 && fk !== ''){
+    w.style.display='block';
+    w.innerHTML=`<div class="alert-box" style="margin-bottom:0"><div class="ai" style="background:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></div><div><h4>Total bobot wawancara: ${totalBobot}% (seharusnya 100%)</h4><p style="font-size:13px;color:var(--fg-muted)">Silakan edit bobot pada kategori ini agar jumlahnya tepat 100%.</p></div></div>`;
+  }else {
+      w.style.display='none';
+  }
+
+  // Tampilkan Panel Komposisi Nilai Akhir jika filter aktif
+  const bkContainer = $('bobotKomponenContainer');
+  if(fk) {
+       const b = getBobotKomponen(fk);
+       const jml = (+b.wawancara||0)+(+b.psikotes||0)+(+b.kinerja||0)+(+b.tpa||0);
+       const ok = jml===100;
+       bkContainer.innerHTML = `
+         <div class="card" style="margin-bottom:16px; background:var(--surface-2); border-left:4px solid ${ok?'var(--primary)':'var(--amber)'}; padding:18px 20px; box-shadow:none">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px">
+                <div style="display:flex; align-items:center; gap:14px; min-width:0">
+                    <div style="width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,var(--primary),var(--secondary)); display:grid; place-items:center; flex-shrink:0; box-shadow:var(--shadow-sm)">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                    </div>
+                    <div style="min-width:0">
+                        <h4 style="margin-bottom:4px; font-size:15px; font-weight:800">Komposisi Nilai Akhir untuk: ${esc(fk)}</h4>
+                        <p style="font-size:13px; color:var(--fg-muted); margin-bottom:0">Wawancara (${b.wawancara}%) · Psikotes (${b.psikotes}%) · Kinerja (${b.kinerja}%) · TPA (${b.tpa}%)${ok?'':' · <b style="color:var(--amber)">Total: '+jml+'% ('+(jml<100?'kurang '+(100-jml):'lebih '+(jml-100))+'%)</b>'}</p>
+                    </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" style="flex-shrink:0; background:var(--surface); box-shadow:var(--shadow-sm)" onclick="openEditBobotKomponen('${esc(fk)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Komposisi Akhir</button>
+            </div>
+         </div>
+       `;
+       bkContainer.style.display = 'block';
+  } else {
+       bkContainer.style.display = 'none';
+  }
+
+  $('kriteriaBody').innerHTML=rows.length?rows.map((k,i)=>`<tr>
+    <td>${i+1}</td>
+    <td>
+        ${fk === '' ? `<div class="kategori-label">${esc(k.kategori||'Umum')}</div><br>` : ''}
+        <b>${esc(k.nama)}</b>
+    </td>
+    <td><b>${k.bobot}%</b></td>
+    <td style="color:var(--fg-muted);font-size:13px">${esc(k.deskripsi||'-')}</td>
+    <td><div class="row-actions">
+      <button class="mini-btn" title="Edit" onclick="openKriteriaForm('${k.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+      <button class="mini-btn del" title="Hapus Instan" onclick="deleteKriteria('${k.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+    </div></td></tr>`).join(''):`<tr><td colspan="5"><div class="empty"><h4>Belum ada kriteria di kategori ini</h4><p>Pilih kategori lain atau tambah kriteria baru.</p></div></td></tr>`;
+}
+
+// Ubah nama kategori yang sedang dipilih di dropdown (berlaku di seluruh data)
+function editKategoriName(){
+  const s=$('kriteriaFilterKategori');
+  const current = s ? s.value : '';
+  if(!current){ toast('Pilih dulu kategori di dropdown di samping','warn'); return; }
+  const val = prompt('Ubah nama kategori "'+current+'" menjadi:', current);
+  if(val && val.trim() && val.trim()!==current){
+    const n = val.trim();
+    db.kriteria.forEach(k=>{ if(k.kategori===current) k.kategori=n; });
+    db.pejabat.forEach(p=>{ if(p.jabatan_tujuan===current) p.jabatan_tujuan=n; });
+    db.bobotLain.forEach(b=>{ if(b.kategori===current) b.kategori=n; });
+    saveDB();
+    renderKategoriOptions('kriteriaFilterKategori');
+    renderKategoriOptions('pejabatFilterTujuan');
+    renderKategoriOptions('hasilFilterTujuan');
+    // Pastikan opsi baru benar-benar ada & terpilih
+    const s2=$('kriteriaFilterKategori');
+    if(!s2.querySelector('option[value="'+CSS.escape(n)+'"]')){
+      const opt=document.createElement('option'); opt.value=n; opt.text=n; s2.add(opt);
+    }
+    s2.value = n;
+    renderKriteria(); renderPejabat(); renderHasil();
+    toast('Kategori diganti menjadi "'+n+'" di seluruh data','success');
+  }
+}
+// Hapus kategori yang sedang dipilih beserta kriteria & nilai terkait (dengan undo)
+function hapusKategori(){
+  const s=$('kriteriaFilterKategori');
+  const current = s ? s.value : '';
+  if(!current){ toast('Pilih dulu kategori di dropdown di samping','warn'); return; }
+  const jmlKriteria = db.kriteria.filter(k=>k.kategori===current).length;
+  const jmlKandidat = db.pejabat.filter(p=>p.jabatan_tujuan===current).length;
+  const jmlNilai = db.nilai.filter(n=>{ const k=db.kriteria.find(x=>x.id===n.kriteriaId); return k && k.kategori===current; }).length;
+  if(!confirm('Hapus kategori "'+current+'" beserta '+jmlKriteria+' kriteria dan '+jmlNilai+' nilai wawancara?'+(jmlKandidat>0?'\n\n⚠ '+jmlKandidat+' kandidat dengan usulan jabatan ini akan dipindahkan ke "Asisten Manajer".':''))) return;
+  const backup={
+    kriteria: db.kriteria.filter(k=>k.kategori===current),
+    bobotLain: db.bobotLain.filter(b=>b.kategori===current),
+    pejabat: db.pejabat.filter(p=>p.jabatan_tujuan===current).map(p=>({id:p.id,tujuan:p.jabatan_tujuan})),
+    nilai: db.nilai.filter(n=>{ const k=db.kriteria.find(x=>x.id===n.kriteriaId); return k && k.kategori===current; })
+  };
+  db.kriteria = db.kriteria.filter(k=>k.kategori!==current);
+  db.bobotLain = db.bobotLain.filter(b=>b.kategori!==current);
+  const nilaiIds = new Set(backup.nilai.map(n=>n.id));
+  db.nilai = db.nilai.filter(n=>!nilaiIds.has(n.id));
+  db.pejabat.forEach(p=>{ if(p.jabatan_tujuan===current) p.jabatan_tujuan='Asisten Manajer'; });
+  saveDB();
+  renderKategoriOptions('kriteriaFilterKategori');
+  renderKategoriOptions('pejabatFilterTujuan');
+  renderKategoriOptions('hasilFilterTujuan');
+  const s2=$('kriteriaFilterKategori'); s2.value=''; 
+  renderKriteria(); renderPejabat(); renderHasil();
+  toast('Kategori "'+current+'" dihapus','warn',()=>{
+    db.kriteria.push(...backup.kriteria);
+    db.bobotLain.push(...backup.bobotLain);
+    db.nilai.push(...backup.nilai);
+    backup.pejabat.forEach(x=>{ const p=db.pejabat.find(p=>p.id===x.id); if(p) p.jabatan_tujuan=x.tujuan; });
+    saveDB();
+    renderKategoriOptions('kriteriaFilterKategori');
+    renderKategoriOptions('pejabatFilterTujuan');
+    renderKategoriOptions('hasilFilterTujuan');
+    renderKriteria(); renderPejabat(); renderHasil();
+    toast('Dibatalkan — kategori "'+current+'" dikembalikan','success');
+  });
+}
+// Tambah kategori/usulan jabatan baru
+function tambahKategori(){
+  const val = prompt('Masukkan nama kategori/usulan jabatan baru:');
+  if(val && val.trim()){
+    const n = val.trim();
+    // Simpan kategori secara PERMANEN ke data (biar muncul di semua dropdown & tidak hilang saat pindah halaman)
+    if(!db.bobotLain.some(b=>b.kategori===n)){
+      db.bobotLain.push({id:uid(), kategori:n, wawancara:35, psikotes:25, kinerja:25, tpa:15});
+      saveDB();
+    }
+    const s=$('kriteriaFilterKategori');
+    const opt = document.createElement('option');
+    opt.value = n; opt.text = n;
+    s.add(opt);
+    s.value = n;
+    renderKriteria();
+    toast('Kategori "'+n+'" ditambahkan — isi kriterianya lewat tombol "+ Tambah Kriteria"','success');
+  }
+}
+
+// Export kriteria ke file JSON (kategori yang sedang dipilih, atau semua)
+function exportKriteria(){
+  const s=$('kriteriaFilterKategori');
+  const fk = s ? s.value : '';
+  const rows = fk
+    ? db.kriteria.filter(k=>k.kategori===fk).map(k=>({kategori:k.kategori,nama:k.nama,bobot:k.bobot,deskripsi:k.deskripsi||''}))
+    : db.kriteria.map(k=>({kategori:k.kategori,nama:k.nama,bobot:k.bobot,deskripsi:k.deskripsi||''}));
+  if(!rows.length){ toast('Tidak ada kriteria untuk diexport','warn'); return; }
+  const komposisi = (fk ? db.bobotLain.filter(b=>b.kategori===fk) : db.bobotLain).map(b=>({kategori:b.kategori,wawancara:b.wawancara,psikotes:b.psikotes,kinerja:b.kinerja,tpa:b.tpa}));
+  const data = {format:'kriteria-asesmen-v1', diExport:new Date().toISOString().slice(0,10), kriteria:rows, komposisi};
+  const namaFile = 'kriteria-'+(fk?fk.replace(/[^a-z0-9]+/gi,'-').toLowerCase():'semua')+'-'+new Date().toISOString().slice(0,10)+'.json';
+  download(namaFile, JSON.stringify(data,null,2), 'application/json');
+  const kats = [...new Set(rows.map(r=>r.kategori))];
+  toast('Export berhasil — '+(fk?'kategori "'+fk+'"':kats.join(', '))+' ('+rows.length+' kriteria + '+komposisi.length+' komposisi bobot)','success');
+}
+
+// Import kriteria dari file JSON teman
+function previewImportKriteria(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    let data;
+    try{ data=JSON.parse(r.result); }catch(err){ toast('File JSON tidak valid','error'); return; }
+    const list = Array.isArray(data) ? data : (data.kriteria && Array.isArray(data.kriteria) ? data.kriteria : null);
+    if(!list || !list.length){ toast('File bukan berisi kriteria','error'); return; }
+    window._importKriteria = list;
+    window._importKriteriaKomposisi = Array.isArray(data.komposisi) ? data.komposisi : null;
+    const kats = [...new Set(list.map(k=>k.kategori||'Asisten Manajer'))];
+    const totalBobot = list.reduce((a,k)=>a+(+k.bobot||0),0);
+    const komposisi = window._importKriteriaKomposisi || [];
+    const semuaKategori = getUniqueKategoriJabatan();
+    showModal('Konfirmasi Import Kriteria','Preview file',`
+      <div style="padding:14px;background:color-mix(in srgb,var(--amber) 12%,transparent);border:1px solid color-mix(in srgb,var(--amber) 30%,transparent);border-radius:var(--r);font-size:13.5px;margin-bottom:16px">Kriteria dengan <b>nama yang sama</b> pada kategori yang sama akan <b>diganti</b>, sisanya <b>ditambahkan</b>.${komposisi.length?` <b>Komposisi bobot akhir</b> ikut diperbarui.`:''}</div>
+      <div class="import-preview">
+        <div class="ip-row"><span>Kategori asli file</span><b>${kats.join(', ')}</b></div>
+        <div class="ip-row"><span>Jumlah Kriteria</span><b>${list.length}</b></div>
+        <div class="ip-row"><span>Total Bobot</span><b>${totalBobot}%</b></div>
+        ${komposisi.length?`<div class="ip-row"><span>Komposisi bobot ikut</span><b>${komposisi.map(c=>esc(c.kategori)+' ('+c.wawancara+'/'+c.psikotes+'/'+c.kinerja+'/'+c.tpa+')').join(', ')}</b></div>`:''}
+        ${list.slice(0,6).map(k=>`<div class="ip-row"><span>${esc(k.nama||'?')}</span><b>${esc(k.kategori||'Asisten Manajer')} · ${k.bobot}%</b></div>`).join('')}
+        ${list.length>6?'<div class="ip-row"><span>...</span><b>+'+ (list.length-6) +' lainnya</b></div>':''}
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label>Simpan kriteria ke kategori:</label>
+        <select id="importKategoriTujuan" style="width:100%;padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg)">
+          <option value="__asli__">Pertahankan kategori asli dari file (${kats.join(', ')})</option>
+          ${semuaKategori.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+        </select>
+        <div class="hint" style="margin-top:6px">Contoh: file berisi kriteria "Asisten Manajer" bisa diimport ke "Asisten Manajer Produksi" — pilih tujuannya di atas.</div>
+      </div>`,
+      `<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-accent" onclick="doImportKriteria()">Import Sekarang</button>`);
+  };
+  r.readAsText(file); e.target.value='';
+}
+function doImportKriteria(){
+  const list = window._importKriteria; if(!list) return;
+  const tujuanSel = $('importKategoriTujuan');
+  const tujuan = tujuanSel ? tujuanSel.value : '__asli__';
+  let baru = 0, diganti = 0;
+  list.forEach(item=>{
+    const nama = String(item.nama||'').trim();
+    const kategori = tujuan==='__asli__' ? String(item.kategori||'Asisten Manajer').trim() : tujuan;
+    const bobot = +item.bobot || 0;
+    if(!nama || !kategori) return;
+    const ada = db.kriteria.find(k=>k.kategori===kategori && k.nama===nama);
+    if(ada){ ada.bobot = bobot; ada.deskripsi = String(item.deskripsi||'').trim(); diganti++; }
+    else { db.kriteria.push({id:uid(),kategori:kategori,nama:nama,bobot:bobot,deskripsi:String(item.deskripsi||'').trim()}); baru++; }
+  });
+  // Komposisi bobot akhir ikut diimport
+  let komposisiUpdate = 0;
+  (window._importKriteriaKomposisi||[]).forEach(c=>{
+    const kat = String(c.kategori||'').trim(); if(!kat) return;
+    const vals = {wawancara:+c.wawancara||0, psikotes:+c.psikotes||0, kinerja:+c.kinerja||0, tpa:+c.tpa||0};
+    const b = db.bobotLain.find(x=>x.kategori===kat);
+    if(b){ Object.assign(b, vals); komposisiUpdate++; }
+    else { db.bobotLain.push({id:uid(), kategori:kat, ...vals}); komposisiUpdate++; }
+  });
+  saveDB();
+  renderKategoriOptions('kriteriaFilterKategori');
+  renderKategoriOptions('pejabatFilterTujuan');
+  renderKategoriOptions('hasilFilterTujuan');
+  renderKriteria(); renderPejabat(); renderHasil();
+  closeModal();
+  toast('Import selesai — '+baru+' ditambahkan, '+diganti+' diperbarui'+(tujuan!=='__asli__'?' ke kategori "'+tujuan+'"':'')+(komposisiUpdate?' + '+komposisiUpdate+' komposisi bobot':'')+'','success');
+}
+
+function openEditBobotKomponen(kategori) {
+    const b = getBobotKomponen(kategori);
+    showModal('Edit Komposisi Nilai Akhir', `Jabatan Tujuan: ${kategori}`, `
+        <form id="bkForm" class="form-grid" onsubmit="return false">
+            <div class="field full">
+                <div class="alert-box" style="margin-bottom:0">
+                    <div class="ai" style="background:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>
+                    <div><h4 style="margin-bottom:2px">Total Persentase</h4><p style="font-size:12px;color:var(--fg-muted)">Bisa disimpan walau belum 100% — peringatan akan muncul di halaman Kriteria.</p></div>
+                </div>
+            </div>
+            <div class="field"><label>Wawancara Kompetensi (%)</label><input type="number" name="wawancara" value="${b.wawancara}" required oninput="updateBkTotal()"></div>
+            <div class="field"><label>Psikotes / Assessment (%)</label><input type="number" name="psikotes" value="${b.psikotes}" required oninput="updateBkTotal()"></div>
+            <div class="field"><label>Kinerja & Rekam Jejak (%)</label><input type="number" name="kinerja" value="${b.kinerja}" required oninput="updateBkTotal()"></div>
+            <div class="field"><label>Tes Teknis / TPA (%)</label><input type="number" name="tpa" value="${b.tpa}" required oninput="updateBkTotal()"></div>
+            <div class="field full" style="margin-top:4px">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-radius:var(--r-sm);background:var(--surface-2);border:1px solid var(--border)">
+                    <span style="font-size:13.5px;font-weight:700">Total</span>
+                    <span id="bkTotal" style="font-weight:800;font-size:18px">—</span>
+                </div>
+                <div class="hint" id="bkTotalHint" style="margin-top:6px"></div>
+            </div>
+        </form>
+    `, `<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="saveBobotKomponen('${kategori}')">Simpan Komposisi</button>`);
+    updateBkTotal();
+}
+function updateBkTotal(){
+  const f=$('bkForm'); if(!f) return;
+  const w=+f.wawancara.value||0, p=+f.psikotes.value||0, k=+f.kinerja.value||0, t=+f.tpa.value||0;
+  const total=w+p+k+t;
+  const el=$('bkTotal'), hint=$('bkTotalHint');
+  if(!el) return;
+  el.textContent=total+'%';
+  if(total===100){ el.style.color='var(--green)'; hint.innerHTML='✅ Tepat 100% — siap disimpan.'; }
+  else if(total<100){ el.style.color='var(--amber)'; hint.innerHTML='⚠ <b>Kurang '+(100-total)+'%</b> lagi untuk mencapai 100%.'; }
+  else { el.style.color='var(--red)'; hint.innerHTML='⚠ <b>Melebihi '+(total-100)+'%</b> dari 100% — kurangi sedikit.'; }
+}
+function saveBobotKomponen(kategori) {
+    const f = $('bkForm');
+    const w = +f.wawancara.value, p = +f.psikotes.value, k = +f.kinerja.value, t = +f.tpa.value;
+    const total = w+p+k+t;
+    let b = db.bobotLain.find(x => x.kategori === kategori);
+    if(!b) {
+        b = {id:uid(), kategori: kategori};
+        db.bobotLain.push(b);
+    }
+    b.wawancara = w; b.psikotes = p; b.kinerja = k; b.tpa = t;
+    saveDB();
+    closeModal();
+    renderKriteria();
+    if(total===100) toast('Komposisi bobot akhir berhasil disimpan (100%)');
+    else toast('Komposisi disimpan — total '+total+'% ('+(total<100?'kurang '+(100-total):'lebih '+(total-100))+'% dari 100%)','warn');
+}
+
+function openKriteriaForm(id){
+  const k=id?db.kriteria.find(x=>x.id===id):{};
+  const cats = getUniqueKategoriJabatan();
+  let jtOptions = cats.map(c => `<option value="${c}" ${k.kategori === c ? 'selected' : ''}>${c}</option>`).join('');
+  if(!k.kategori && !cats.includes("Asisten Manajer")) jtOptions += `<option value="Asisten Manajer" selected>Asisten Manajer</option>`;
+
+  showModal(id?'Edit Kriteria':'Tambah Kriteria','Aspek wawancara promosi',`
+    <form id="krForm" class="form-grid" onsubmit="return false">
+      <div class="field full"><label>Kategori (Jabatan Tujuan) <span class="req">*</span></label>
+        <select name="kategori" id="krKategoriSel" required>
+            ${jtOptions}
+            <option value="_baru_">+ Tambah Kategori Baru...</option>
+        </select>
+      </div>
+      <div class="field full"><label>Nama Aspek <span class="req">*</span></label><input name="nama" value="${esc(k.nama||'')}" required><div class="err-msg">Nama wajib diisi</div></div>
+      <div class="field full"><label>Bobot (%) <span class="req">*</span></label><input name="bobot" type="number" min="1" max="100" value="${k.bobot??''}" required><div class="hint">Total seluruh bobot dalam satu kategori harusnya 100%.</div></div>
+      <div class="field full"><label>Deskripsi</label><textarea name="deskripsi">${esc(k.deskripsi||'')}</textarea></div>
+    </form>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="saveKriteria('${id||''}')">${id?'Simpan':'Tambah'}</button>`);
+    
+    $('krKategoriSel').addEventListener('change', function() {
+        if(this.value === '_baru_') {
+            const val = prompt("Masukkan nama Kategori/Usulan Jabatan baru:");
+            if(val && val.trim()) {
+                const opt = document.createElement('option');
+                opt.value = val.trim(); opt.text = val.trim();
+                this.add(opt, this.options[this.length - 1]);
+                this.value = val.trim();
+            } else {
+                this.value = cats[0] || "Asisten Manajer";
+            }
+        }
+    });
+}
+function saveKriteria(id){
+  const f=$('krForm'),nama=f.nama.value.trim(),bobot=+f.bobot.value, kategori=f.kategori.value;
+  if(!nama||!bobot||!kategori){f.querySelector('.field').classList.add('err');return;}
+  const data={nama,bobot,deskripsi:f.deskripsi.value.trim(), kategori};
+  if(id)Object.assign(db.kriteria.find(x=>x.id===id),data);
+  else{data.id=uid();db.kriteria.push(data);}
+  saveDB();
+  
+  renderKategoriOptions('pejabatFilterTujuan');
+  renderKategoriOptions('kriteriaFilterKategori');
+  renderKategoriOptions('hasilFilterTujuan');
+  
+  // Set filter to the newly saved category
+  if($('kriteriaFilterKategori')) $('kriteriaFilterKategori').value = kategori;
+  
+  renderKriteria();renderHasil();closeModal();toast(id?'Kriteria diperbarui':'Kriteria ditambahkan');
+}
+function deleteKriteria(id){
+  const k=db.kriteria.find(x=>x.id===id);if(!k)return;
+  const backup={kriteria:k,nilai:db.nilai.filter(n=>n.kriteriaId===id)};
+  db.kriteria=db.kriteria.filter(x=>x.id!==id);
+  db.nilai=db.nilai.filter(n=>n.kriteriaId!==id);
+  saveDB();
+  renderKriteria();renderDashboard();refreshNilaiSelect();renderHasil();
+  toast('Kriteria '+k.nama+' terhapus','warn',()=>{
+    db.kriteria.push(backup.kriteria);
+    db.nilai.push(...backup.nilai);
+    saveDB();
+    renderKriteria();renderDashboard();refreshNilaiSelect();renderHasil();
+    toast('Dibatalkan — kriteria dikembalikan','success');
+  });
+}
+
+/* ========== PENILAIAN ========== */
+function refreshNilaiSelect(){
+  // Isi opsi filter (jabatan asal & unit) dari data
+  ['nilaiFilterJabatan','nilaiFilterUnit'].forEach(id=>{
+    const s=$(id); if(!s) return;
+    const cur=s.value;
+    const field = id==='nilaiFilterJabatan' ? 'jabatan' : 'unit';
+    const vals=[...new Set(db.pejabat.map(p=>(p[field]||'').trim()).filter(v=>v))].sort((a,b)=>a.localeCompare(b,'id'));
+    s.innerHTML=`<option value="">${id==='nilaiFilterJabatan'?'Semua Jabatan Asal':'Semua Unit Kerja'}</option>`+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    if(cur && vals.includes(cur)) s.value=cur;
+  });
+  // Isi opsi filter usulan jabatan
+  const st=$('nilaiFilterTujuan'); if(st){
+    const cur=st.value;
+    const cats=getUniqueKategoriJabatan();
+    st.innerHTML=`<option value="">Semua Usulan Jabatan</option>`+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    if(cur && cats.includes(cur)) st.value=cur;
+  }
+  // Filter kandidat berdasarkan pencarian + 3 filter
+  const q=$('nilaiSearch')?$('nilaiSearch').value.toLowerCase():'';
+  const fj=$('nilaiFilterJabatan')?$('nilaiFilterJabatan').value:'';
+  const ft=$('nilaiFilterTujuan')?$('nilaiFilterTujuan').value:'';
+  const fu=$('nilaiFilterUnit')?$('nilaiFilterUnit').value:'';
+  const list=db.pejabat.filter(p=>
+    (!q || p.nama.toLowerCase().includes(q) || (p.nip||'').includes(q) || (p.unit||'').toLowerCase().includes(q)) &&
+    (!fj || (p.jabatan||'')===fj) &&
+    (!ft || p.jabatan_tujuan===ft) &&
+    (!fu || (p.unit||'')===fu));
+  const s=$('nilaiSelect'),cur=s.value;
+  s.innerHTML=list.length?list.map(p=>`<option value="${p.id}">${esc(p.nama)}${p.unit?' — '+esc(p.unit):''}</option>`).join(''):'<option value="">— Tidak ada kandidat cocok —</option>';
+  if(list.length && !list.find(p=>p.id===cur)) s.value=list[0].id;
+  loadPenilaianForm();
+}
+function pilihPejabat(id){$('nilaiSelect').value=id;loadPenilaianForm();}
+// Buka form penilaian kandidat dari dashboard (reset filter pencarian dulu)
+function bukaPenilaian(id){
+  if($('nilaiSearch')) $('nilaiSearch').value='';
+  ['nilaiFilterJabatan','nilaiFilterTujuan','nilaiFilterUnit'].forEach(x=>{ const el=$(x); if(el) el.value=''; });
+  switchView('nilai');
+  pilihPejabat(id);
+}
+
+function loadPenilaianForm(){
+  const wrap=$('nilaiFormWrap'),s=$('nilaiSelect'),tag=$('nilaiStatusTag');
+  const p=db.pejabat.find(x=>x.id===s.value);
+  if(!p){wrap.innerHTML=`<div class="empty"><h4>Belum ada kandidat</h4><p>Tambahkan peserta wawancara di menu Data Kandidat</p></div>`;return;}
+  // Tanggal penilaian per bagian (dari record nilaiLain)
+  const nlMeta = db.nilaiLain.find(n=>n.pejabatId===p.id)||{};
+  const fmtTgl = t => { const d=new Date(String(t).slice(0,10)+'T00:00:00'); return isNaN(d)?t:d.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'}); };
+  const tglW = nlMeta.tWawancara ? '🗓 '+fmtTgl(nlMeta.tWawancara) : '';
+  const tglL = nlMeta.tLain ? '🗓 '+fmtTgl(nlMeta.tLain) : '';
+  
+  const krActive = getKriteriaByJabatan(p.jabatan_tujuan);
+  
+  if(!krActive.length){wrap.innerHTML=`<div class="empty"><h4>Belum ada kriteria untuk jabatan ini</h4><p>Tambahkan kriteria penilaian untuk Kategori <b>${esc(p.jabatan_tujuan)}</b> di menu Kriteria Penilaian.</p></div>`;return;}
+  
+  const dSkor = getSkorDetails(p.id);
+  const g = grade(dSkor.akhir);
+  tag.className='tag '+(g?g.cls:'gray');tag.textContent=g?`${g.k} · ${dSkor.akhir}`:'Belum lengkap';
+
+  const existing=db.nilai.filter(n=>n.pejabatId===p.id);
+  const b = getBobotKomponen(p.jabatan_tujuan);
+  
+  // Wawancara HTML
+  let wHtml = krActive.map(k=>{
+      const n=existing.find(x=>x.kriteriaId===k.id);
+      const v=n?n.skor:'';
+      return `
+      <div class="skor-row">
+        <div><div class="k-title">${esc(k.nama)} <span style="color:var(--primary);font-size:12px;margin-left:4px">(${k.bobot}%)</span></div><div class="k-sub" style="margin-top:4px">${esc(k.deskripsi||'')}</div></div>
+        <div class="seg-skor" id="seg_${k.id}">
+          ${[1,2,3,4,5].map(val => `<button type="button" class="${v == val ? 'active' : ''}" onclick="setSkor('${k.id}', ${val})">${val}</button>`).join('')}
+        </div>
+        <input type="hidden" id="num_${k.id}" value="${v}">
+      </div>`;
+  }).join('');
+
+  // Komponen Lain HTML
+  let cHtml = `
+      <div style="margin-top:32px; margin-bottom:12px; font-weight:800; font-size:16px; color:var(--primary-700)">Komponen Penilaian Lainnya (Skala 0-100)</div>
+      <div style="background:var(--surface-2); border-radius:var(--r); padding:8px 20px; border:1px solid var(--border)">
+          <div class="lain-row">
+              <div class="l-title">Psikotes / Assessment Psikologi <span style="color:var(--primary);font-size:12px;margin-left:4px">(${b.psikotes}%)</span></div>
+              <input type="number" id="num_psi" min="0" max="100" value="${dSkor.psikotes!==null?dSkor.psikotes:''}" placeholder="0-100" oninput="updateTotal('${esc(p.jabatan_tujuan)}')">
+          </div>
+          <div class="lain-row">
+              <div class="l-title">Kinerja & Rekam Jejak <span style="color:var(--primary);font-size:12px;margin-left:4px">(${b.kinerja}%)</span></div>
+              <input type="number" id="num_kin" min="0" max="100" value="${dSkor.kinerja!==null?dSkor.kinerja:''}" placeholder="0-100" oninput="updateTotal('${esc(p.jabatan_tujuan)}')">
+          </div>
+          <div class="lain-row">
+              <div class="l-title">Tes Teknis / TPA / PDAM-SPAM <span style="color:var(--primary);font-size:12px;margin-left:4px">(${b.tpa}%)</span></div>
+              <input type="number" id="num_tpa" min="0" max="100" value="${dSkor.tpa!==null?dSkor.tpa:''}" placeholder="0-100" oninput="updateTotal('${esc(p.jabatan_tujuan)}')">
+          </div>
+      </div>
+  `;
+
+  wrap.innerHTML=`
+    <div class="info-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--s3);margin-bottom:var(--s4)">
+      <div>
+        <b style="font-size:17px">${esc(p.nama)}</b>
+        <div style="font-size:13px;color:var(--fg-muted)">${esc(p.jabatan||'-')} ${p.unit?' · '+esc(p.unit):''}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center">
+          <div class="kategori-label" style="margin-bottom:0">Usulan: ${esc(p.jabatan_tujuan||'Asisten Manajer')}</div>
+          ${tglW?`<span class="tag blue" title="Wawancara dinilai pada tanggal ini">Wawancara: ${tglW}</span>`:''}
+          ${tglL?`<span class="tag green" title="Komponen lain dinilai pada tanggal ini">Komponen Lain: ${tglL}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm no-print" onclick="printDetail('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Cetak Berita Acara</button></div>
+    </div>
+    <div id="skorRows">${wHtml}</div>
+    ${cHtml}
+    <div class="skor-total" id="skorTotal"></div>
+    <div class="no-print" style="display:flex;justify-content:flex-end;gap:12px;margin-top:var(--s4)">
+        <button class="btn btn-ghost" onclick="resetFormNilai()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 1 0 2.13-5.87L2 9"/></svg>Ulangi Nilai</button>
+        <button class="btn btn-primary" onclick="saveNilai()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Simpan Penilaian</button>
+    </div>`;
+  updateTotal(p.jabatan_tujuan);
+}
+
+function setSkor(id, val){
+  const inp = $('num_'+id);
+  const btns = document.querySelectorAll('#seg_'+id+' button');
+  if(inp.value == val) {
+      // Toggle pembatalan jika tombol yang sama diklik 2x
+      inp.value = '';
+      btns.forEach(b => b.classList.remove('active'));
+  } else {
+      inp.value = val;
+      btns.forEach(b => b.classList.remove('active'));
+      btns[val-1].classList.add('active');
+  }
+  
+  const pId = $('nilaiSelect').value;
+  const p = db.pejabat.find(x=>x.id===pId);
+  updateTotal(p ? p.jabatan_tujuan : null);
+}
+
+window.resetFormNilai = function() {
+    const pId = $('nilaiSelect').value;
+    if(!pId) return;
+    
+    // Hapus dari database secara permanen langsung tanpa confirm
+    db.nilai = db.nilai.filter(n => n.pejabatId !== pId);
+    db.nilaiLain = db.nilaiLain.filter(n => n.pejabatId !== pId);
+    saveDB();
+    
+    // Render ulang tampilan (akan kosong otomatis)
+    loadPenilaianForm();
+    renderDashboard();
+    renderHasil();
+    toast('Data nilai berhasil dikosongkan (reset)', 'success');
+};
+
+function currentScores(jabatanTujuan){
+  const krActive = getKriteriaByJabatan(jabatanTujuan);
+  const out={w: {}, l:{}};
+  krActive.forEach(k=>{const inp=$('num_'+k.id);if(inp&&inp.value!=='')out.w[k.id]=+inp.value;});
+  const psi = $('num_psi'); if(psi && psi.value!=='') out.l.psikotes = +psi.value;
+  const kin = $('num_kin'); if(kin && kin.value!=='') out.l.kinerja = +kin.value;
+  const tpa = $('num_tpa'); if(tpa && tpa.value!=='') out.l.tpa = +tpa.value;
+  return out;
+}
+
+function updateTotal(jabatanTujuan){
+  const t=$('skorTotal');if(!t)return;
+  const curr = currentScores(jabatanTujuan);
+  const krActive = getKriteriaByJabatan(jabatanTujuan);
+  const b = getBobotKomponen(jabatanTujuan);
+  
+  // Wawancara Kalkulasi Persentase Bobot Sendiri
+  const totalBobot=krActive.reduce((a,k)=>a+(+k.bobot||0),0);
+  let wSum=0;
+  krActive.forEach(k=>{const v=curr.w[k.id];if(v!=null) wSum+= (v/5 * 100) * (+k.bobot)/totalBobot;});
+  const wFinal = Object.keys(curr.w).length > 0 ? wSum : null;
+
+  let sumAkhir = 0;
+  let totalBobotAktif = 0;
+  if(wFinal !== null) { sumAkhir += wFinal * (b.wawancara/100); totalBobotAktif += b.wawancara; }
+  if(curr.l.psikotes != null) { sumAkhir += curr.l.psikotes * (b.psikotes/100); totalBobotAktif += b.psikotes; }
+  if(curr.l.kinerja != null) { sumAkhir += curr.l.kinerja * (b.kinerja/100); totalBobotAktif += b.kinerja; }
+  if(curr.l.tpa != null) { sumAkhir += curr.l.tpa * (b.tpa/100); totalBobotAktif += b.tpa; }
+
+  const isComplete = totalBobotAktif === 100 && Object.keys(curr.w).length === krActive.length;
+  const akhir = totalBobotAktif > 0 ? Math.round(sumAkhir) : 0;
+  const g = grade(akhir);
+
+  t.innerHTML=`
+    <span class="t-label">${isComplete?'Total Nilai Akhir Promosi':'Total Sementara ('+totalBobotAktif+'% data terisi)'}</span>
+    <div style="display:flex;align-items:center;gap:12px"><span class="t-num">${akhir}</span>${g?`<span class="t-grade" style="background:color-mix(in srgb,var(--${g.cls}) 15%,transparent);color:var(--${g.cls})">${g.k} · ${g.txt}</span>`:''}</div>`;
+}
+
+function saveNilai(){
+  const p=db.pejabat.find(x=>x.id===$('nilaiSelect').value);
+  if(!p)return;
+  const krActive = getKriteriaByJabatan(p.jabatan_tujuan);
+  if(!krActive.length)return;
+  
+  const curr=currentScores(p.jabatan_tujuan);
+  const hasAnyLain = curr.l.psikotes != null || curr.l.kinerja != null || curr.l.tpa != null;
+  
+  if(!Object.keys(curr.w).length && !hasAnyLain){
+      // Tidak diisi apa-apa tapi klik simpan, anggap reset
+      db.nilai = db.nilai.filter(n => n.pejabatId !== p.id);
+      db.nilaiLain = db.nilaiLain.filter(n => n.pejabatId !== p.id);
+      saveDB();
+      loadPenilaianForm();renderDashboard();renderHasil();
+      toast('Form kosong, data nilai dihapus (Direset).');
+      return;
+  }
+  
+  // Wawancara
+  krActive.forEach(k=>{
+    const old=db.nilai.find(n=>n.pejabatId===p.id&&n.kriteriaId===k.id);
+    if(curr.w[k.id]!=null){
+      if(old)old.skor=curr.w[k.id];
+      else db.nilai.push({id:uid(),pejabatId:p.id,kriteriaId:k.id,skor:curr.w[k.id]});
+    }else if(old){db.nilai=db.nilai.filter(n=>n!==old);}
+  });
+
+  // Komponen Lain
+  const nl = db.nilaiLain.find(n => n.pejabatId === p.id);
+  const lData = {
+      pejabatId: p.id,
+      psikotes: curr.l.psikotes != null ? curr.l.psikotes : '',
+      kinerja: curr.l.kinerja != null ? curr.l.kinerja : '',
+      tpa: curr.l.tpa != null ? curr.l.tpa : ''
+  };
+  
+  if(nl){ Object.assign(nl, lData); } 
+  else { db.nilaiLain.push(lData); }
+
+  // Catat tanggal penilaian per bagian (biar tahu sudah dinilai tanggal berapa)
+  const tglSimpan = tanggalBA || new Date().toISOString().slice(0,10);
+  const nlRec = db.nilaiLain.find(n => n.pejabatId === p.id);
+  if(Object.keys(curr.w).length > 0) nlRec.tWawancara = tglSimpan;
+  if(hasAnyLain) nlRec.tLain = tglSimpan;
+
+  saveDB();
+  
+  const dSkor = getSkorDetails(p.id);
+  loadPenilaianForm();renderDashboard();renderHasil();
+  
+  toast(`Nilai tersimpan — Nilai Akhir Promosi: ${dSkor.akhir||0}`);
+}
+
+/* ========== EXPORT/IMPORT NILAI ========== */
+function exportNilai(){
+  const rows=[];
+  db.pejabat.forEach(p=>{
+    const w=[];
+    db.nilai.filter(n=>n.pejabatId===p.id).forEach(n=>{
+      const k=db.kriteria.find(x=>x.id===n.kriteriaId);
+      if(k) w.push({kriteria:k.nama, skor:n.skor});
+    });
+    const nl=db.nilaiLain.find(n=>n.pejabatId===p.id)||{};
+    const psi=nl.psikotes!==''&&nl.psikotes!=null?nl.psikotes:'';
+    const kin=nl.kinerja!==''&&nl.kinerja!=null?nl.kinerja:'';
+    const tpa=nl.tpa!==''&&nl.tpa!=null?nl.tpa:'';
+    if(!w.length && !psi && !kin && !tpa) return; // lewati yang belum dinilai
+    rows.push({nama:p.nama, wawancara:w, psikotes:psi, kinerja:kin, tpa:tpa});
+  });
+  if(!rows.length){ toast('Belum ada nilai untuk diexport','warn'); return; }
+  const data={format:'nilai-asesmen-v1', diExport:new Date().toISOString().slice(0,10), nilai:rows};
+  download('nilai-asesmen-'+new Date().toISOString().slice(0,10)+'.json', JSON.stringify(data,null,2), 'application/json');
+  toast('Export nilai berhasil — '+rows.length+' kandidat','success');
+}
+function previewImportNilai(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    let data;
+    try{ data=JSON.parse(r.result); }catch(err){ toast('File JSON tidak valid','error'); return; }
+    const list = Array.isArray(data) ? data : (data.nilai && Array.isArray(data.nilai) ? data.nilai : null);
+    if(!list || !list.length){ toast('File bukan berisi data nilai','error'); return; }
+    window._importNilai = list;
+    let ketemu=0, tidakAda=0, totalSkor=0;
+    list.forEach(rec=>{
+      const ada = db.pejabat.some(p=>p.nama===rec.nama);
+      if(ada) ketemu++; else tidakAda++;
+      totalSkor += (rec.wawancara||[]).length;
+      if(rec.psikotes!==''&&rec.psikotes!=null) totalSkor++;
+      if(rec.kinerja!==''&&rec.kinerja!=null) totalSkor++;
+      if(rec.tpa!==''&&rec.tpa!=null) totalSkor++;
+    });
+    showModal('Konfirmasi Import Nilai','Preview file',`
+      <div style="padding:14px;background:color-mix(in srgb,var(--amber) 12%,transparent);border:1px solid color-mix(in srgb,var(--amber) 30%,transparent);border-radius:var(--r);font-size:13.5px;margin-bottom:16px">Nilai kandidat yang <b>nama sama</b> akan <b>diganti/ditambahkan</b>. Kandidat yang tidak ada di daftar akan dilewati.</div>
+      <div class="import-preview">
+        <div class="ip-row"><span>Kandidat dalam file</span><b>${list.length}</b></div>
+        <div class="ip-row"><span>Cocok dengan daftar kandidat</span><b>${ketemu}</b></div>
+        ${tidakAda?`<div class="ip-row"><span>Tidak ditemukan (dilewati)</span><b style="color:var(--red)">${tidakAda}</b></div>`:''}
+        <div class="ip-row"><span>Jumlah nilai (wawancara + komponen)</span><b>${totalSkor}</b></div>
+        ${list.slice(0,6).map(rec=>`<div class="ip-row"><span>${esc(rec.nama||'?')}</span><b>${(rec.wawancara||[]).length} wawancara${rec.psikotes!==''&&rec.psikotes!=null?' · psi:'+rec.psikotes:''}${rec.kinerja!==''&&rec.kinerja!=null?' · kin:'+rec.kinerja:''}${rec.tpa!==''&&rec.tpa!=null?' · tpa:'+rec.tpa:''}</b></div>`).join('')}
+        ${list.length>6?'<div class="ip-row"><span>...</span><b>+'+ (list.length-6) +' lainnya</b></div>':''}
+      </div>`,
+      `<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-accent" onclick="doImportNilai()">Import Sekarang</button>`);
+  };
+  r.readAsText(file); e.target.value='';
+}
+function doImportNilai(){
+  const list = window._importNilai; if(!list) return;
+  let ok=0, lewat=0;
+  list.forEach(rec=>{
+    const p = db.pejabat.find(x=>x.nama===rec.nama);
+    if(!p){ lewat++; return; }
+    // Nilai wawancara (cocokkan berdasarkan nama kriteria pada kategori kandidat)
+    (rec.wawancara||[]).forEach(w=>{
+      const k = db.kriteria.find(x=>x.kategori===p.jabatan_tujuan && x.nama===w.kriteria)
+             || db.kriteria.find(x=>x.nama===w.kriteria);
+      if(!k) return;
+      const skor = +w.skor; if(!skor) return;
+      const old = db.nilai.find(n=>n.pejabatId===p.id && n.kriteriaId===k.id);
+      if(old) old.skor = skor;
+      else db.nilai.push({id:uid(), pejabatId:p.id, kriteriaId:k.id, skor:skor});
+    });
+    // Komponen lainnya
+    const psi = rec.psikotes!==''&&rec.psikotes!=null?rec.psikotes:'';
+    const kin = rec.kinerja!==''&&rec.kinerja!=null?rec.kinerja:'';
+    const tpa = rec.tpa!==''&&rec.tpa!=null?rec.tpa:'';
+    if(psi||kin||tpa){
+      const nl = db.nilaiLain.find(n=>n.pejabatId===p.id);
+      const lData = {pejabatId:p.id, psikotes:psi, kinerja:kin, tpa:tpa};
+      if(nl) Object.assign(nl, lData);
+      else db.nilaiLain.push(lData);
+    }
+    ok++;
+  });
+  saveDB();
+  renderDashboard(); renderHasil(); refreshNilaiSelect();
+  closeModal();
+  toast('Import nilai selesai — '+ok+' kandidat'+(lewat?', '+lewat+' dilewati (tidak ada di daftar)':''),'success');
+}
+
+/* ========== HASIL ========== */
+function renderHasil(){
+  const q=$('hasilSearch').value.toLowerCase();
+  const fg=$('hasilFilterGrade').value;
+  const fj=$('hasilFilterTujuan')?$('hasilFilterTujuan').value:'';
+  
+  const rows=db.pejabat.map(p=>({p, d:getSkorDetails(p.id), g:grade(getSkorDetails(p.id).akhir)}))
+    .filter(x=>(!q||x.p.nama.toLowerCase().includes(q)||(x.p.unit||'').toLowerCase().includes(q)) && (!fg||(x.g&&x.g.k===fg)) && (!fj||x.p.jabatan_tujuan===fj))
+    .sort((a,b)=>(b.d.akhir??-1)-(a.d.akhir??-1));
+  
+  const grades=['A','B','C','D'];
+  const gf=$('hasilFilterGrade'),cur=gf.value;
+  gf.innerHTML='<option value="">Semua Grade</option>'+grades.map(g=>`<option>${g}</option>`).join('');gf.value=cur;
+  
+  $('hasilBody').innerHTML=rows.length?rows.map((x,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><b>${esc(x.p.nama)}</b></td>
+    <td>${esc(x.p.jabatan_tujuan||'Asisten Manajer')}<div style="font-size:12px;color:var(--fg-muted)">Asal: ${esc(x.p.unit||'-')}</div></td>
+    <td>${x.d.akhir!=null?`<b>${x.d.akhir}</b><span class="score-bar"><span style="width:${x.d.akhir}%;background:var(--${x.g.cls})"></span></span>`:'<span style="color:var(--fg-muted)">—</span>'}</td>
+    <td>${x.g?`<span class="tag ${x.g.cls}">${x.g.k}</span>`:'<span class="tag gray">Belum dinilai</span>'}</td>
+    <td><div class="row-actions"><button class="mini-btn" title="Cetak BA" ${x.d.akhir==null?'disabled style="opacity:.4"':''} onclick="printDetail('${x.p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button></div></td>
+  </tr>`).join(''):`<tr><td colspan="6"><div class="empty"><h4>Belum ada hasil</h4><p>Isi penilaian asesmen terlebih dahulu</p></div></td></tr>`;
+}
+
+function printDetail(id){
+  const p=db.pejabat.find(x=>x.id===id);if(!p)return;
+  const krActive = getKriteriaByJabatan(p.jabatan_tujuan);
+  const b = getBobotKomponen(p.jabatan_tujuan);
+  const dSkor=getSkorDetails(id), g=grade(dSkor.akhir);
+  
+  // Rincian Wawancara 
+  const rownilai=db.nilai.filter(n=>n.pejabatId===id);
+  const detailRows=krActive.map((k,i)=>{const n=rownilai.find(r=>r.kriteriaId===k.id);return `<tr><td style="text-align:center">${i+1}</td><td><b>${esc(k.nama)}</b><br><span style="font-size:12px;color:#555">${esc(k.deskripsi)}</span></td><td style="text-align:center">${k.bobot}%</td><td style="text-align:center;font-size:16px"><b>${n?n.skor:'—'}</b></td></tr>`;}).join('');
+  
+  // Komposisi Akhir Table
+  const nW = dSkor.wawancara!=null ? dSkor.wawancara : 0;
+  const nP = dSkor.psikotes!=null ? dSkor.psikotes : 0;
+  const nK = dSkor.kinerja!=null ? dSkor.kinerja : 0;
+  const nT = dSkor.tpa!=null ? dSkor.tpa : 0;
+  
+  const trW = (nW * (b.wawancara/100)).toFixed(2);
+  const trP = (nP * (b.psikotes/100)).toFixed(2);
+  const trK = (nK * (b.kinerja/100)).toFixed(2);
+  const trT = (nT * (b.tpa/100)).toFixed(2);
+
+  const komposisiTable = `
+    <table style="width:100%;border-collapse:collapse;margin-top:24px;margin-bottom:16px">
+        <thead><tr style="background:#f0f6ff"><th>Komponen Penilaian</th><th style="width:15%">Bobot</th><th style="width:20%">Nilai (0-100)</th><th style="width:20%">Nilai Tertimbang</th></tr></thead>
+        <tbody>
+            <tr><td>Psikotes / Assessment Psikologi</td><td style="text-align:center">${b.psikotes}%</td><td style="text-align:center">${nP||'—'}</td><td style="text-align:center">${nP?trP:'—'}</td></tr>
+            <tr><td>Wawancara Kompetensi</td><td style="text-align:center">${b.wawancara}%</td><td style="text-align:center">${nW||'—'}</td><td style="text-align:center">${nW?trW:'—'}</td></tr>
+            <tr><td>Kinerja & Rekam Jejak</td><td style="text-align:center">${b.kinerja}%</td><td style="text-align:center">${nK||'—'}</td><td style="text-align:center">${nK?trK:'—'}</td></tr>
+            <tr><td>Tes Teknis / TPA / Pemahaman PDAM</td><td style="text-align:center">${b.tpa}%</td><td style="text-align:center">${nT||'—'}</td><td style="text-align:center">${nT?trT:'—'}</td></tr>
+            <tr style="font-weight:bold; background:#fafafa"><td colspan="3" style="text-align:right">Nilai Akhir Promosi</td><td style="text-align:center; font-size:16px; color:var(--primary)">${dSkor.akhir||'—'}</td></tr>
+        </tbody>
+    </table>
+  `;
+  
+  const certs = p.sertifikat && p.sertifikat.length > 0 
+        ? p.sertifikat.map(c => `<li style="margin-bottom:2px">${esc(c.name)}</li>`).join('') 
+        : '<i>Tidak ada dokumen lampiran</i>';
+  
+  const pName = namaPanelis ? esc(namaPanelis) : '................................................';
+
+  showModal('Detail Penilaian','Berita Acara',`<div class="report" style="padding:10px 40px">
+    <div class="rep-head" style="margin-bottom:12px; padding-bottom:8px"><h1>Lembar Penilaian Asesmen Promosi</h1><p style="color:#666;margin-top:4px">Calon ${esc(p.jabatan_tujuan||'Asisten Manajer')} — Perumda Air Minum Tirta Darma Ayu</p></div>
+    <div style="display:flex;gap:16px;margin-bottom:16px;font-size:13px;background:#f8f9fa;padding:12px;border-radius:8px;border:1px solid #e5e7eb">
+        <div style="flex:1"><b>Nama Kandidat:</b><br>${esc(p.nama)}<br><span style="color:#555">${esc(p.nip||'')}</span></div>
+        <div style="flex:1"><b>Jabatan / Unit Asal:</b><br>${esc(p.jabatan||'-')}<br>${esc(p.unit||'-')}</div>
+        <div style="flex:1.2"><b>Dokumen / Sertifikat:</b><br><ul style="margin-left:16px; margin-top:4px; margin-bottom:0">${certs}</ul></div>
+    </div>
+    
+    <div style="font-weight:700; margin-bottom:8px; font-size:14px; color:var(--primary)">A. Detail Wawancara Kompetensi</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:0">
+        <thead><tr style="background:#f0f6ff"><th style="width:5%">No</th><th>Kompetensi / Aspek yang Diukur</th><th style="width:15%">Bobot</th><th style="width:20%">Skor (1-5)</th></tr></thead>
+        <tbody>${detailRows}</tbody>
+    </table>
+    
+    <div style="font-weight:700; margin-top:24px; margin-bottom:8px; font-size:14px; color:var(--primary)">B. Komposisi Nilai Akhir</div>
+    ${komposisiTable}
+
+    <div style="display:flex;justify-content:flex-end;gap:30px;font-size:15px;margin-top:16px;padding-top:16px;border-top:2px solid #ddd;align-items:center">
+        <div><b>Rekomendasi Akhir:</b></div>
+        <div><span style="font-size:14px;padding:6px 14px;border-radius:20px;background:#f0f6ff;color:#0F2438;font-weight:700">${g?g.k+' — '+g.txt:''}</span></div>
+    </div>
+    <div style="margin-top:40px;display:flex;justify-content:flex-end">
+        <div style="width:280px;text-align:center;font-size:14px;line-height:1.5">${esc(tempatBA)}, ${formatTanggalBA()}<br>Pewawancara / Panelis<br><br><br><br><br><div style="font-weight:bold; text-decoration:underline;">${pName}</div></div>
+    </div>
+  </div>`,
+  `<button class="btn btn-ghost no-print" onclick="closeModal()">Tutup</button><button class="btn btn-primary no-print" onclick="window.print()">Cetak Berita Acara</button>`,'lg');
+}
+
+function printHasil(){
+  const fj=$('hasilFilterTujuan')?$('hasilFilterTujuan').value:'';
+  const rows=db.pejabat.map(p=>({p,d:getSkorDetails(p.id),g:grade(getSkorDetails(p.id).akhir)}))
+    .filter(x => !fj || x.p.jabatan_tujuan === fj)
+    .sort((a,b)=>(b.d.akhir??-1)-(a.d.akhir??-1));
+    
+  if(!rows.length){toast('Belum ada data','warn');return;}
+  const dinilai=rows.filter(r=>r.d.akhir!=null),rata=dinilai.length?Math.round(dinilai.reduce((a,r)=>a+r.d.akhir,0)/dinilai.length):0;
+  
+  const pName = namaPanelis ? esc(namaPanelis) : '................................................';
+  const titleCat = fj ? `(Jabatan: ${esc(fj)})` : '';
+
+  showModal('Laporan Rekap','Semua kandidat',`<div class="report">
+    <div class="rep-head"><h1>Rekap Hasil Akhir Asesmen Promosi ${titleCat}</h1><p style="color:#666;margin-top:4px">Dicetak ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</p></div>
+    <div style="display:flex;gap:24px;margin-bottom:18px;font-size:14px"><div><b>Total Kandidat:</b> ${rows.length}</div><div><b>Sudah Dinilai:</b> ${dinilai.length}</div><div><b>Rata-rata Nilai Akhir:</b> ${rata}</div></div>
+    <table><thead><tr><th>No</th><th>Nama Kandidat</th><th>Usulan Jabatan</th><th>Psikotes</th><th>Wawancara</th><th>Kinerja</th><th>TPA</th><th>Nilai Akhir</th><th>Rekomendasi</th></tr></thead><tbody>
+    ${rows.map((r,i)=>`<tr>
+        <td style="text-align:center">${i+1}</td>
+        <td>${esc(r.p.nama)}</td>
+        <td>${esc(r.p.jabatan_tujuan||'Asisten Manajer')}</td>
+        <td style="text-align:center">${r.d.psikotes??'-'}</td>
+        <td style="text-align:center">${r.d.wawancara??'-'}</td>
+        <td style="text-align:center">${r.d.kinerja??'-'}</td>
+        <td style="text-align:center">${r.d.tpa??'-'}</td>
+        <td style="text-align:center;color:var(--primary)"><b>${r.d.akhir??'-'}</b></td>
+        <td>${r.g?r.g.k:'-'}</td>
+    </tr>`).join('')}
+    </tbody></table>
+    <div style="margin-top:40px;display:flex;justify-content:flex-end">
+        <div style="width:280px;text-align:center;font-size:14px;line-height:1.5">${esc(tempatBA)}, ${formatTanggalBA()}<br>Pewawancara / Panelis<br><br><br><br><br><div style="font-weight:bold; text-decoration:underline;">${pName}</div></div>
+    </div>
+    </div>`,
+  `<button class="btn btn-ghost no-print" onclick="closeModal()">Tutup</button><button class="btn btn-primary no-print" onclick="window.print()">Cetak Laporan Rekap</button>`,'xl');
+}
+
+/* ========== UTILITAS ========== */
+function download(filename,content,mime){const blob=new Blob([content],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
+function exportJSON(){download('asesmen-promosi-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(db,null,2),'application/json');toast('Backup diekspor');}
+function csvCell(v){v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function toCSV(headers,rows){const BOM='\ufeff';return BOM+[headers.join(',')].concat(rows.map(r=>r.map(csvCell).join(','))).join('\r\n');}
+function exportCSV(kind){
+  if(kind==='hasil'){
+    const rows=db.pejabat.map(p=>{const d=getSkorDetails(p.id),g=grade(d.akhir);return[p.nama,p.nip,p.jabatan,p.unit,p.jabatan_tujuan,d.psikotes??'',d.wawancara??'',d.kinerja??'',d.tpa??'',d.akhir??'',g?g.k:'',g?g.txt:'Belum dinilai']});
+    if(!rows.length){toast('Data kosong','warn');return;}
+    download('rekap-asesmen-'+new Date().toISOString().slice(0,10)+'.csv',toCSV(['Nama','NIK','Jabatan Asal','Unit Asal','Usulan Jabatan','Psikotes','Wawancara','Kinerja','TPA','Nilai Akhir Promosi','Grade','Rekomendasi'],rows),'text/csv;charset=utf-8;');
+  }else{
+    const rows=db.pejabat.map(p=>[p.nama,p.nip,p.jabatan,p.unit,p.jabatan_tujuan]);
+    if(!rows.length){toast('Data kosong','warn');return;}
+    download('kandidat-promosi-'+new Date().toISOString().slice(0,10)+'.csv',toCSV(['Nama','NIK','Jabatan Asal','Unit Asal','Usulan Jabatan'],rows),'text/csv;charset=utf-8;');
+  }
+  toast('CSV diekspor');
+}
+function previewImport(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    let data;try{data=JSON.parse(r.result);}catch(err){toast('File JSON tidak valid','error');return;}
+    if(!data||!Array.isArray(data.pejabat)){toast('Struktur backup tidak dikenali','error');return;}
+    window._importData=data;
+    showModal('Konfirmasi Import','Preview isi backup',`
+      <div style="padding:14px;background:color-mix(in srgb,var(--amber) 12%,transparent);border:1px solid color-mix(in srgb,var(--amber) 30%,transparent);border-radius:var(--r);font-size:13.5px;margin-bottom:16px"><b>⚠ Peringatan:</b> Seluruh data saat ini akan <b>diganti</b> dengan data dari file backup.</div>
+      <div class="import-preview">${[['Kandidat',data.pejabat?.length||0],['Kriteria',data.kriteria?.length||0],['Riwayat Penilaian (Wawancara)',data.nilai?.length||0],['Riwayat Penilaian (Lainnya)',data.nilaiLain?.length||0]].map(([k,v])=>`<div class="ip-row"><span>${k}</span><b>${v} data</b></div>`).join('')}</div>`,
+      `<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-accent" onclick="doImport()">Ganti & Import</button>`);
+  };
+  r.readAsText(file);e.target.value='';
+}
+function doImport(){
+  const d=window._importData;if(!d)return;
+  db={pejabat:d.pejabat||[],kriteria:d.kriteria||[],nilai:d.nilai||[], nilaiLain:d.nilaiLain||[], bobotLain:d.bobotLain||[]};
+  saveDB();
+  renderAll();closeModal();toast('Data berhasil diimport','success');
+}
+function resetToDefaultData(){
+  if(confirm("Tindakan ini akan me-reset sistem, MENGHAPUS SEMUA NILAI, dan memuat ulang 68 data Kandidat (Manajer & Asmen) awal. Lanjutkan?")){
+    db.kriteria=DEFAULT_KRITERIA.map(k=>({id:uid(),...k}));
+    db.pejabat=DEFAULT_PEJABAT.map(p=>({id:uid(),...p}));
+    db.bobotLain=DEFAULT_BOBOT_LAIN.map(b=>({id:uid(),...b}));
+    db.nilai=[]; db.nilaiLain=[];
+    saveDB();
+    renderAll();switchView('dashboard');
+    toast('Data default berhasil dimuat — 68 kandidat siap dinilai','success');
+  }
+}
+
+/* ========== GUIDE ========== */
+function openGuide(){
+  const steps=[
+    ['Pilih Kandidat','Masuk ke menu "Input Penilaian" — pilih nama calon kandidat.'],
+    ['Isi Skor Wawancara','Pilih angka 1 sampai 5 untuk setiap kriteria berdasarkan hasil wawancara (menyumbang 35%). Pertanyaan akan menyesuaikan dengan Usulan Jabatan kandidat.'],
+    ['Isi Komponen Lain','Masukkan nilai Psikotes, Kinerja, dan TPA (skala 0-100) di form bagian bawah. Nilai akhir akan dihitung otomatis.'],
+    ['Simpan & Cetak BA','Klik "Simpan Penilaian". Klik "Cetak Berita Acara" untuk print format laporan 1 lembar utuh.']
+  ];
+  const tips=[
+    ['👤','Kategori Dinamis','Pertanyaan/kriteria wawancara bisa dibedakan untuk Manajer, Asisten Manajer, dll. Atur ini di menu "Kriteria Penilaian".'],
+    ['👁️','Preview Sertifikat','Bisa upload sertifikat di menu Data Kandidat > Edit. File bisa di-preview dengan klik 👁️.'],
+    ['↩️','Reset Nilai Instan','Klik tombol "Ulangi Nilai" di menu Input Penilaian jika ingin membatalkan/mengosongkan semua nilai kandidat tersebut.'],
+    ['💾','Backup Aman','Klik menu "Data & Utilitas" lalu "Export Backup JSON" untuk menyimpan cadangan file seluruh nilai.']
+  ];
+  const istilah=[
+    ['Wawancara (35%)','Sistem mengkonversi skor 1-5 ke skala 0-100 secara otomatis.'],
+    ['Psikotes (25%)','Komponen nilai asesmen psikologi skala 0-100.'],
+    ['Kinerja (25%)','Komponen rekam jejak kerja skala 0-100.'],
+    ['TPA (15%)','Tes potensi akademik atau pemahaman teknis PDAM skala 0-100.'],
+    ['Grade A, B, C, D','A (≥85 Sangat Disarankan), B (≥75 Disarankan), C (≥65 Perlu Pengembangan), D (<65 Belum Disarankan).']
+  ];
+  const body=`
+    <h4 style="font-size:14px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px">Langkah Penggunaan</h4>
+    ${steps.map((s,i)=>`<div class="guide-step"><div class="guide-num">${i+1}</div><div><h4>${s[0]}</h4><p>${s[1]}</p></div></div>`).join('')}
+    <h4 style="font-size:14px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.04em;margin:22px 0 12px">Sistem Penilaian</h4>
+    ${istilah.map(x=>`<div class="guide-step"><div class="guide-num" style="background:linear-gradient(135deg,var(--secondary),var(--primary))">!</div><div><h4>${x[0]}</h4><p>${x[1]}</p></div></div>`).join('')}
+    <h4 style="font-size:14px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.04em;margin:22px 0 12px">Tips Tambahan</h4>
+    ${tips.map(t=>`<div class="guide-step"><div class="guide-num" style="background:linear-gradient(135deg,var(--accent),var(--accent-600));font-size:16px">${t[0]}</div><div><h4>${t[1]}</h4><p>${t[2]}</p></div></div>`).join('')}
+    `;
+  showModal('Panduan Penggunaan','Sistem Asesmen Promosi Jabatan',body,`<button class="btn btn-primary" onclick="closeModal()">Mengerti</button>`,'lg');
+}
+
+/* ========== INIT ========== */
+function renderAll(){
+    renderDashboard();
+    renderKategoriOptions('pejabatFilterTujuan');
+    renderFilterJabatanUnit();
+    renderKategoriOptions('kriteriaFilterKategori');
+    renderKategoriOptions('hasilFilterTujuan');
+    renderPejabat();
+    renderKriteria();
+    renderHasil();
+    refreshNilaiSelect();
+}
+load();setThemeIcon();loadPalette();renderAll();fbInit();
+</script>
+</body>
+</html>
