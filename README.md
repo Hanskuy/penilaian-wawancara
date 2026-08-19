@@ -63,12 +63,38 @@ Version publik ini sengaja dipisahkan kunci penyimpanannya dari versi internal, 
 
 Aplikasi ini mungkin butuh koneksi internet sekali waktu untuk memuat pustaka grafik/excel dari CDN; tanpa internet fitur inti (input nilai, tabel, cetak) tetap berjalan, hanya grafik dashboard yang tidak muncul.
 
+## Tampilan Aplikasi
+
+### Dashboard
+![Dashboard](docs/screenshot-navy.png)
+*Halaman utama: kartu ringkasan, daftar kandidat yang belum dinilai (bisa langsung diklik), dan grafik.*
+
+### Mode Gelap
+![Mode Gelap](docs/screenshot-dark.png)
+*Mode gelap dengan latar navy — nyaman dipakai di ruangan minim cahaya.*
+
+### Galeri Tema
+
+| Navy Coral | Teal Klasik | Biru Korporat |
+|-----------|------------|---------------|
+| ![Navy](docs/screenshot-navy.png) | ![Teal](docs/screenshot-teal.png) | ![Biru](docs/screenshot-blue.png) |
+
+| Ungu Indigo | Hijau Segar | Merah Marun |
+|------------|-------------|-------------|
+| ![Indigo](docs/screenshot-indigo.png) | ![Hijau](docs/screenshot-green.png) | ![Marun](docs/screenshot-maroon.png) |
+
+### Pengaturan Warna
+![Palet Warna](docs/screenshot-palette.png)
+*Enam preset tema, plus warna primer, aksen, dan latar terang/gelap bisa diatur sendiri.*
+
 ## Struktur Repositori
 
 ```
 penilaian-wawancara/
 ├── penilaian-wawancara.html   ← Aplikasi utama (satu file)
-└── README.md                  ← Dokumentasi ini
+├── README.md                  ← Dokumentasi ini
+├── LICENSE                    ← Lisensi MIT
+└── docs/                      ← Screenshot tampilan aplikasi
 ```
 
 ## Lisensi
