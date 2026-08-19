@@ -483,7 +483,7 @@ tbody tr:last-child td{border-bottom:none}
         <div class="toolbar" style="gap:16px;">
           <select class="filter" id="nilaiSelect" style="max-width:320px;flex:1" onchange="loadPenilaianForm()"></select>
           <input type="text" id="nilaiPanelis" placeholder="Nama Pewawancara..." style="padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:14px;max-width:240px;flex:1" oninput="simpanNamaPanelis(this.value)" title="Nama yang akan tercetak otomatis pada Berita Acara">
-          <input type="text" id="nilaiTempat" placeholder="Tempat (cth: Indramayu)" style="padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:14px;max-width:180px;flex:1" oninput="simpanTempatBA(this.value)" title="Kota/tempat pada Berita Acara">
+          <input type="text" id="nilaiTempat" placeholder="Tempat (cth: Jakarta)" style="padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:14px;max-width:180px;flex:1" oninput="simpanTempatBA(this.value)" title="Kota/tempat pada Berita Acara">
           <input type="date" id="nilaiTanggal" style="padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:14px" onchange="simpanTanggalBA(this.value)" title="Tanggal pada Berita Acara">
           <span class="tag gray" id="nilaiStatusTag" style="margin-left:auto">Belum dinilai</span>
         </div>
@@ -572,7 +572,7 @@ let db={pejabat:[], kriteria:[], nilai:[], nilaiLain:[], bobotLain:[]};
 let sortState={pejabat:{key:'nama',dir:1},kriteria:{key:'bobot',dir:-1}};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 let namaPanelis = localStorage.getItem('asesmen_publik_panelis') || '';
-let tempatBA = localStorage.getItem('asesmen_publik_tempat') || 'Indramayu';
+let tempatBA = localStorage.getItem('asesmen_publik_tempat') || '';
 let tanggalBA = localStorage.getItem('asesmen_publik_tanggal') || ''; // kosong = hari ini
 
 /* ========== FIREBASE (SYNC REAL-TIME) ========== */
@@ -762,7 +762,7 @@ function simpanNamaPanelis(val){
   localStorage.setItem('asesmen_publik_panelis', namaPanelis);
 }
 function simpanTempatBA(val){
-  tempatBA = val.trim() || 'Indramayu';
+  tempatBA = val.trim() || '';
   localStorage.setItem('asesmen_publik_tempat', tempatBA);
 }
 function simpanTanggalBA(val){
@@ -1177,7 +1177,7 @@ function openPejabatForm(id){
         </select>
         <div class="hint">Pilih dari daftar, atau gunakan opsi ubah/tambah untuk mengetik nama baru.</div>
       </div>
-      <div class="field"><label>Unit Kerja</label><input name="unit" value="${esc(p.unit||'')}" placeholder="cth: Cabang Lohbener"></div>
+      <div class="field"><label>Unit Kerja</label><input name="unit" value="${esc(p.unit||'')}" placeholder="cth: Cabang Utara"></div>
       
       <div class="field full" style="border-top:1px dashed var(--border); padding-top:14px; margin-top:6px;">
         <label>Sertifikat / Dokumen Pendukung</label>
@@ -2229,7 +2229,7 @@ function printDetail(id){
   const pName = namaPanelis ? esc(namaPanelis) : '................................................';
 
   showModal('Detail Penilaian','Berita Acara',`<div class="report" style="padding:10px 40px">
-    <div class="rep-head" style="margin-bottom:12px; padding-bottom:8px"><h1>Lembar Penilaian Asesmen Promosi</h1><p style="color:#666;margin-top:4px">Calon ${esc(p.jabatan_tujuan||'Asisten Manajer')} — Perumda Air Minum Tirta Darma Ayu</p></div>
+    <div class="rep-head" style="margin-bottom:12px; padding-bottom:8px"><h1>Lembar Penilaian Asesmen Promosi</h1><p style="color:#666;margin-top:4px">Calon ${esc(p.jabatan_tujuan||'Asisten Manajer')} — Perusahaan Air Minum Daerah</p></div>
     <div style="display:flex;gap:16px;margin-bottom:16px;font-size:13px;background:#f8f9fa;padding:12px;border-radius:8px;border:1px solid #e5e7eb">
         <div style="flex:1"><b>Nama Kandidat:</b><br>${esc(p.nama)}<br><span style="color:#555">${esc(p.nip||'')}</span></div>
         <div style="flex:1"><b>Jabatan / Unit Asal:</b><br>${esc(p.jabatan||'-')}<br>${esc(p.unit||'-')}</div>
